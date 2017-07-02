@@ -1,0 +1,64 @@
+
+@global='''
+  actionManager
+  argumentManager
+  renderManager
+'''
+
+
+[app]
+beans +='''
+ org.febit.web.ActionListener
+'''
+
+
+[renderManager :org.febit.web.component.RenderManager]
+defaultRender=org.febit.web.render.NotSupportedRender
+renders='''
+  org.febit.web.render.GenericRender
+  org.febit.web.render.ServiceResultRender
+'''
+
+
+[argumentManager :org.febit.web.component.ArgumentManager]
+defaultArgument=org.febit.web.argument.BeanArgument
+arguments='''
+    org.febit.web.argument.BaseArrayTypeArgument
+    org.febit.web.argument.StringArrayTypeArgument
+    org.febit.web.argument.BaseTypeArgument
+    org.febit.web.argument.BeanArgument
+    org.febit.web.argument.BeanArrayArgument
+    org.febit.web.argument.ServletArgument
+    org.febit.web.argument.UploadFileArgument
+'''
+
+
+[renderWrapper :org.febit.web.component.DefaultRenderWrapper]
+
+
+[uploadFileFactory :org.febit.web.upload.UploadFileFactory]
+
+
+[actionManager :org.febit.web.component.ActionManager]
+uploadFileFactory=uploadFileFactory
+renderWrapper=renderWrapper
+actionInvoker=org.febit.web.component.DefaultActionInvoker
+defaultFilters=defaultFilters
+scan='''
+/    org.febit.app.action
+'''
+
+
+[utf8EncodingFilter :org.febit.web.filter.UTF8EncodingFilter]
+[errorHandlerFilter :org.febit.web.filter.ErrorHandlerFilter]
+[formTokenFilter :org.febit.web.filter.FormTokenFilter]
+[tokenFilter :formTokenFilter]
+[jsonpFilter :org.febit.web.filter.JsonpFilter]
+[stopwatchFilter :org.febit.web.filter.StopwatchFilter]
+[filters :org.febit.web.Filters]
+
+
+[defaultFilters :filters]
+filters='''
+'''
+

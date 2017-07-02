@@ -1,0 +1,12 @@
+
+@import='''
+'''
+
+[bearychatFilter : org.febit.bearychat.BearychatFilter]
+tokens='''
+'''
+
+[argumentManager]
+arguments+='''
+  org.febit.bearychat.OutgoingMessageTypeArgument
+'''
