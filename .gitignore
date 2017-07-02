@@ -1,0 +1,10 @@
+target/
+*.iml
+.idea
+.settings/
+.classpath
+.project
+nb-configuration.xml
+nbactions.xml
+!.travis.yml
+!.gitignore
