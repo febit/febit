@@ -15,6 +15,7 @@
  */
 package org.febit.web.component;
 
+import org.febit.util.ClassUtil;
 import org.febit.util.Petite;
 import org.febit.util.PetiteGlobalBeanProvider;
 
@@ -47,10 +48,6 @@ public class ComponentPetiteProvider implements PetiteGlobalBeanProvider {
         if (type.isInterface()) {
             return null;
         }
-        try {
-            return type.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            throw new RuntimeException(ex);
-        }
+        return ClassUtil.newInstance(type);
     }
 }

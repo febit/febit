@@ -410,12 +410,7 @@ public class ActionManager implements Component {
     }
 
     protected Object createActionInstance(Class type) {
-        final Object action;
-        try {
-            action = type.newInstance();
-        } catch (InstantiationException | IllegalAccessException ex) {
-            throw new RuntimeException(ex);
-        }
+        final Object action = ClassUtil.newInstance(type);
         Services.inject(action);
         return action;
     }
