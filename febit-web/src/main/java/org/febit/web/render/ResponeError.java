@@ -25,6 +25,7 @@ import org.febit.web.util.ServletUtil;
  */
 public final class ResponeError implements Renderable {
 
+    public static final ResponeError ERROR_403 = new ResponeError(403);
     public static final ResponeError ERROR_404 = new ResponeError(404);
     public static final ResponeError ERROR_204 = new ResponeError(204);
 

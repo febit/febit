@@ -5,10 +5,22 @@
   renderManager
 '''
 
+[renderWrapper :org.febit.web.component.DefaultRenderWrapper]
+[uploadFileFactory :org.febit.web.upload.UploadFileFactory]
+
+[utf8EncodingFilter :org.febit.web.filter.UTF8EncodingFilter]
+[errorHandlerFilter :org.febit.web.filter.ErrorHandlerFilter]
+[formTokenFilter    :org.febit.web.filter.FormTokenFilter]
+[jsonpFilter        :org.febit.web.filter.JsonpFilter]
+[stopwatchFilter    :org.febit.web.filter.StopwatchFilter]
+[forbiddenFilter    :org.febit.web.filter.ForbiddenFilter]
+[filters            :org.febit.web.Filters]
+[tokenFilter        :formTokenFilter]
+
 
 [app]
 beans +='''
- org.febit.web.ActionListener
+  org.febit.web.ActionListener
 '''
 
 
@@ -23,20 +35,14 @@ renders='''
 [argumentManager :org.febit.web.component.ArgumentManager]
 defaultArgument=org.febit.web.argument.BeanArgument
 arguments='''
-    org.febit.web.argument.BaseArrayTypeArgument
-    org.febit.web.argument.StringArrayTypeArgument
-    org.febit.web.argument.BaseTypeArgument
-    org.febit.web.argument.BeanArgument
-    org.febit.web.argument.BeanArrayArgument
-    org.febit.web.argument.ServletArgument
-    org.febit.web.argument.UploadFileArgument
+  org.febit.web.argument.BaseArrayTypeArgument
+  org.febit.web.argument.StringArrayTypeArgument
+  org.febit.web.argument.BaseTypeArgument
+  org.febit.web.argument.BeanArgument
+  org.febit.web.argument.BeanArrayArgument
+  org.febit.web.argument.ServletArgument
+  org.febit.web.argument.UploadFileArgument
 '''
-
-
-[renderWrapper :org.febit.web.component.DefaultRenderWrapper]
-
-
-[uploadFileFactory :org.febit.web.upload.UploadFileFactory]
 
 
 [actionManager :org.febit.web.component.ActionManager]
@@ -49,16 +55,7 @@ scan='''
 '''
 
 
-[utf8EncodingFilter :org.febit.web.filter.UTF8EncodingFilter]
-[errorHandlerFilter :org.febit.web.filter.ErrorHandlerFilter]
-[formTokenFilter :org.febit.web.filter.FormTokenFilter]
-[tokenFilter :formTokenFilter]
-[jsonpFilter :org.febit.web.filter.JsonpFilter]
-[stopwatchFilter :org.febit.web.filter.StopwatchFilter]
-[filters :org.febit.web.Filters]
-
 
 [defaultFilters :filters]
 filters='''
 '''
-
