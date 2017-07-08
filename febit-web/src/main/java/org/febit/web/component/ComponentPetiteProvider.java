@@ -30,13 +30,6 @@ public class ComponentPetiteProvider implements PetiteGlobalBeanProvider {
         if (Component.class.isAssignableFrom(type)) {
             return true;
         }
-        String simpleClassName = type.getSimpleName();
-        if (simpleClassName.endsWith("Service") && simpleClassName.length() > 7) {
-            return true;
-        }
-        if (simpleClassName.endsWith("ServiceImpl")) {
-            return true;
-        }
         return false;
     }
 
