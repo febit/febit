@@ -30,6 +30,7 @@
     <module>febit-web</module>
     <module>febit-bearychat</module>
     <module>febit-leancloud</module>
+    <module>febit-schedule</module>
   </modules>
   <profiles>
     <profile>
