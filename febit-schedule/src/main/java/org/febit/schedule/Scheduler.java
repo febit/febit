@@ -34,7 +34,6 @@ public final class Scheduler {
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Scheduler.class);
 
     private static final int TTL = 60 * 1000;
-    private static long threadNumber = 0L;
 
     private boolean daemon;
     private boolean enableNotifyThread;
@@ -202,7 +201,7 @@ public final class Scheduler {
 
     private void click(final long millis) {
         if (this.enableNotifyThread) {
-            final NotifyThread myNotifyThread = new NotifyThread(this, "webit-scheduler-notify-" + nextThreadNumber());
+            final NotifyThread myNotifyThread = new NotifyThread(this, "webit-scheduler-notify-" + ThreadUtil.nextThreadNumber());
             //XXX: if this.notifyThread != null ??
             this.notifyThread = myNotifyThread;
             myNotifyThread.startNotify(millis);
@@ -221,10 +220,6 @@ public final class Scheduler {
                 LOG.error("Failed to notify executor for task: " + entry.executor.getTask().getTaskName(), e);
             }
         }
-    }
-
-    private static synchronized long nextThreadNumber() {
-        return threadNumber++;
     }
 
     private final static class NotifyThread extends Thread {
@@ -254,7 +249,7 @@ public final class Scheduler {
         private final Scheduler scheduler;
 
         TimerThread(Scheduler scheduler) {
-            super("webit-scheduler-timer-" + nextThreadNumber());
+            super("webit-scheduler-timer-" + ThreadUtil.nextThreadNumber());
             this.scheduler = scheduler;
         }
 

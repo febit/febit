@@ -21,7 +21,13 @@ package org.febit.schedule.util;
  */
 public class ThreadUtil {
 
+    private static long threadNumber = 1L;
+
     private ThreadUtil() {
+    }
+
+    public static synchronized long nextThreadNumber() {
+        return threadNumber++;
     }
 
     public static void interruptAndTillDies(final Thread thread) {
