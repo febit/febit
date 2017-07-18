@@ -258,6 +258,7 @@ public final class Scheduler {
             //MISSTAKE_ALLOW = 200
             while (sleepTime > 200) {
                 Thread.sleep(sleepTime);
+                sleepTime = nextMinute - System.currentTimeMillis();
             }
         }
 
