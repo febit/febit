@@ -140,7 +140,7 @@ public class ActionManager implements Component {
     }
 
     public ActionRequest buildActionRequest(HttpServletRequest request, HttpServletResponse response) {
-        final ActionConfig actionConfig = actionConfigMap.get(ServletUtil.getServletPath(request));
+        final ActionConfig actionConfig = actionConfigMap.get(ServletUtil.getRequestPath(request));
         if (actionConfig != null) {
             if (ServletUtil.isMultipartRequest(request)) {
                 MultipartRequestWrapper wrapper = new MultipartRequestWrapper(request, uploadFileFactory);

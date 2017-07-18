@@ -165,6 +165,14 @@ public class ServletUtil {
         return ret;
     }
 
+    public static String getRequestPath(HttpServletRequest request) {
+        String path = getServletPath(request);
+        if (path == null || path.isEmpty()) {
+            path = request.getPathInfo();
+        }
+        return path;
+    }
+
     public static String getServletPath(HttpServletRequest request) {
         String result = getIncludeServletPath(request);
         if (result != null) {
