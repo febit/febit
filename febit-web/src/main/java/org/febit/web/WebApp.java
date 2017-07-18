@@ -47,44 +47,62 @@ public class WebApp extends App implements javax.servlet.Filter {
     protected ActionManager actionManager;
 
     @Override
-    protected void loadProps(String propsFiles) {
-        PropsUtil.load(_props, BASE_WEBAPP);
-        super.loadProps(propsFiles);
+    public void init(FilterConfig filterConfig) throws ServletException {
+        start(filterConfig.getServletContext(),
+                filterConfig.getInitParameter("props"));
     }
 
     @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        this.servletContext = filterConfig.getServletContext();
-        String propsFiles = filterConfig.getInitParameter("props");
-        if (propsFiles == null) {
-            propsFiles = "/*.webapp";
+    public void doFilter(ServletRequest request, ServletResponse responce, FilterChain filterChain) throws IOException, ServletException {
+        boolean handled = handle((HttpServletRequest) request, (HttpServletResponse) responce);
+        if (!handled) {
+            filterChain.doFilter(request, responce);
         }
-        _instance = this;
-        start(propsFiles);
     }
 
     @Override
     public void destroy() {
         stop();
-        _instance = null;
     }
 
     @Override
-    public void doFilter(ServletRequest req, ServletResponse res, FilterChain filterChain) throws IOException, ServletException {
+    protected void loadProps(String propsFiles) {
+        PropsUtil.load(_props, BASE_WEBAPP);
+        super.loadProps(propsFiles);
+    }
 
-        final ActionRequest request = this.actionManager.buildActionRequest((HttpServletRequest) req, (HttpServletResponse) res);
-        if (request != null) {
-            LOACL_REQ.set(request);
-            try {
-                request.invoke();
-            } catch (Exception ex) {
-                handleException(ex);
-            } finally {
-                LOACL_REQ.remove();
-            }
-        } else {
-            filterChain.doFilter(req, res);
+    public void start(ServletContext servletContext, String propsFiles) {
+        _instance = this;
+        this.servletContext = servletContext;
+        super.start(propsFiles != null ? propsFiles : "/*.webapp");
+    }
+
+    @Override
+    @Deprecated
+    public void start(String propsFiles) {
+        throw new UnsupportedOperationException("Deprecated! call start(ServletContext servletContext, String propsFiles) instead");
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        _instance = null;
+    }
+
+    public boolean handle(HttpServletRequest request, HttpServletResponse responce) throws IOException, ServletException {
+        final ActionRequest actionRequest = this.actionManager.buildActionRequest(request, responce);
+        if (actionRequest == null) {
+            return false;
         }
+        LOACL_REQ.set(actionRequest);
+        try {
+            actionRequest.invoke();
+        } catch (Exception ex) {
+            handleException(ex);
+        } finally {
+            LOACL_REQ.remove();
+        }
+        return true;
     }
 
     protected void handleException(Exception ex) throws IOException, ServletException {
