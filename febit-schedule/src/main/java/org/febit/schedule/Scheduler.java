@@ -29,11 +29,12 @@ import org.febit.schedule.util.ThreadUtil;
  *
  * @author zqq90
  */
-public final class Scheduler {
+public class Scheduler {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Scheduler.class);
 
     private static final int TTL = 60 * 1000;
+    private static final String THREAD_NAME_PREFIX = "febit-scheduler-";
 
     private boolean daemon;
     private boolean enableNotifyThread;
@@ -44,7 +45,7 @@ public final class Scheduler {
     private boolean initialized;
     private boolean started;
     private boolean paused;
-    private NotifyThread notifyThread;
+    private Thread notifyThread;
     private TimerThread timerThread;
     private TaskExecutorFactory executorFactory;
 
@@ -132,7 +133,7 @@ public final class Scheduler {
             if (started) {
                 throw new IllegalStateException("Scheduler already started");
             }
-            timerThread = new TimerThread(this);
+            timerThread = new TimerThread();
             timerThread.start();
             // Change the state of the scheduler.
             started = true;
@@ -189,7 +190,7 @@ public final class Scheduler {
                     for (TaskExecutorEntry entry : entrys) {
                         entry.executor.goonIfPaused();
                     }
-                    timerThread = new TimerThread(this);
+                    timerThread = new TimerThread();
                     timerThread.start();
                     paused = false;
                 }
@@ -201,10 +202,16 @@ public final class Scheduler {
 
     private void click(final long millis) {
         if (this.enableNotifyThread) {
-            final NotifyThread myNotifyThread = new NotifyThread(this, "webit-scheduler-notify-" + ThreadUtil.nextThreadNumber());
-            //XXX: if this.notifyThread != null ??
-            this.notifyThread = myNotifyThread;
-            myNotifyThread.startNotify(millis);
+            final Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Scheduler.this.notifyAllExecutor(millis);
+                }
+            }, THREAD_NAME_PREFIX + "notify-" + ThreadUtil.nextThreadNumber());
+            //XXX: what if this.notifyThread != null ??
+            thread.setDaemon(this.daemon);
+            thread.start();
+            this.notifyThread = thread;
         } else {
             this.notifyAllExecutor(millis);
         }
@@ -222,54 +229,29 @@ public final class Scheduler {
         }
     }
 
-    private final static class NotifyThread extends Thread {
+    private class TimerThread extends Thread {
 
-        private final Scheduler scheduler;
-        private long millis;
-
-        NotifyThread(Scheduler scheduler, String name) {
-            super(name);
-            this.scheduler = scheduler;
-            this.setDaemon(scheduler.daemon);
+        TimerThread() {
+            super(THREAD_NAME_PREFIX + "timer-" + ThreadUtil.nextThreadNumber());
         }
 
-        void startNotify(long millis) {
-            this.millis = millis;
-            this.start();
-        }
-
-        @Override
-        public void run() {
-            this.scheduler.notifyAllExecutor(this.millis);
-        }
-    }
-
-    private final static class TimerThread extends Thread {
-
-        private final Scheduler scheduler;
-
-        TimerThread(Scheduler scheduler) {
-            super("webit-scheduler-timer-" + ThreadUtil.nextThreadNumber());
-            this.scheduler = scheduler;
-        }
-
-        private static void safeSleepToMillis(long nextMinute) throws InterruptedException {
-            long sleepTime = nextMinute - System.currentTimeMillis();
+        private void safeSleepToMillis(final long nextMillis) throws InterruptedException {
+            long sleepMillis = nextMillis - System.currentTimeMillis();
             //MISSTAKE_ALLOW = 200
-            while (sleepTime > 200) {
-                Thread.sleep(sleepTime);
-                sleepTime = nextMinute - System.currentTimeMillis();
+            while (sleepMillis > 200) {
+                Thread.sleep(sleepMillis);
+                sleepMillis = nextMillis - System.currentTimeMillis();
             }
         }
 
         @Override
         public void run() {
-            long nextMinute = ((System.currentTimeMillis() / TTL) + 1) * TTL;
+            long nextMinuteMillis = ((System.currentTimeMillis() / TTL) + 1) * TTL;
             // Work until the scheduler is started.
             for (;;) {
                 try {
-                    safeSleepToMillis(nextMinute);
-                    this.scheduler.click(nextMinute);
+                    safeSleepToMillis(nextMinuteMillis);
+                    Scheduler.this.click(nextMinuteMillis);
                 } catch (InterruptedException e) {
                     // exit if interrupted!
                     break;
@@ -277,8 +259,8 @@ public final class Scheduler {
 
                 // Calculating next minute.
                 do {
-                    nextMinute += TTL;
-                } while (nextMinute < System.currentTimeMillis());
+                    nextMinuteMillis += TTL;
+                } while (nextMinuteMillis < System.currentTimeMillis());
             }
         }
     }
