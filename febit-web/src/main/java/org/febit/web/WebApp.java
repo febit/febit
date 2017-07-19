@@ -37,7 +37,7 @@ import org.febit.web.component.ActionManager;
 public class WebApp extends App implements javax.servlet.Filter {
 
     private static final ThreadLocal<ActionRequest> LOACL_REQ = new ThreadLocal<>();
-    protected static final String BASE_WEBAPP = "classpath:febit-web-base.webapp";
+    protected static final String BASE_WEBAPP = "classpath:febit-web-base.imod";
 
     protected static WebApp _instance;
 
