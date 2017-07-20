@@ -78,6 +78,14 @@ public class Scheduler {
         this.executorFactory = executorFactory;
     }
 
+    public boolean isStarted() {
+        return started;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
     private void initialize() {
         if (initialized) {
             return;
@@ -146,9 +154,17 @@ public class Scheduler {
                 // Interrupts the timer and waits for its death.
                 ThreadUtil.interruptAndTillDies(this.timerThread);
                 ThreadUtil.interruptAndTillDies(this.notifyThread);
+                this.timerThread = null;
+                this.notifyThread = null;
                 final TaskExecutorEntry[] entrys = getTaskExecutors();
                 for (TaskExecutorEntry entry : entrys) {
                     entry.executor.askforStop();
+                }
+                if (paused) {
+                    for (TaskExecutorEntry entry : entrys) {
+                        entry.executor.goonIfPaused();
+                    }
+                    paused = false;
                 }
                 for (TaskExecutorEntry entry : entrys) {
                     entry.executor.stopAndWait();
@@ -168,6 +184,8 @@ public class Scheduler {
                     // Interrupts the timer and waits for its death.
                     ThreadUtil.interruptAndTillDies(this.timerThread);
                     ThreadUtil.interruptAndTillDies(this.notifyThread);
+                    this.timerThread = null;
+                    this.notifyThread = null;
                     final TaskExecutorEntry[] entrys = getTaskExecutors();
                     for (TaskExecutorEntry entry : entrys) {
                         entry.executor.askforPause();
@@ -208,7 +226,9 @@ public class Scheduler {
                     Scheduler.this.notifyAllExecutor(millis);
                 }
             }, THREAD_NAME_PREFIX + "notify-" + ThreadUtil.nextThreadNumber());
-            //XXX: what if this.notifyThread != null ??
+            if (this.notifyThread != null && this.notifyThread.isAlive()) {
+                //FIXME: alert this unexpected state
+            }
             thread.setDaemon(this.daemon);
             thread.start();
             this.notifyThread = thread;
