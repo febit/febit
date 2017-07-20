@@ -37,7 +37,7 @@ public class Scheduler {
     private static final String THREAD_NAME_PREFIX = "febit-scheduler-";
 
     private boolean daemon;
-    private boolean enableNotifyThread;
+    private boolean useNotifyThread;
     private int timeOffset;
 
     private final Object lock = new Object();
@@ -70,8 +70,8 @@ public class Scheduler {
         return timeOffset;
     }
 
-    public void setEnableNotifyThread(boolean enableNotifyThread) {
-        this.enableNotifyThread = enableNotifyThread;
+    public void setUseNotifyThread(boolean useNotifyThread) {
+        this.useNotifyThread = useNotifyThread;
     }
 
     public void setExecutorFactory(TaskExecutorFactory executorFactory) {
@@ -84,6 +84,14 @@ public class Scheduler {
 
     public boolean isPaused() {
         return paused;
+    }
+
+    public boolean isUseNotifyThread() {
+        return useNotifyThread;
+    }
+
+    public boolean isDaemon() {
+        return daemon;
     }
 
     private void initialize() {
@@ -219,7 +227,7 @@ public class Scheduler {
     }
 
     private void click(final long millis) {
-        if (this.enableNotifyThread) {
+        if (this.useNotifyThread) {
             final Thread thread = new Thread(new Runnable() {
                 @Override
                 public void run() {
