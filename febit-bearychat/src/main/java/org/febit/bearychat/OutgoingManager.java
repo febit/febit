@@ -45,32 +45,32 @@ public class OutgoingManager {
     protected final Map<String, HandlerConfig> directHandlers = new HashMap<>();
     protected final List<HandlerConfig> handlers = new ArrayList<>();
 
-    public void regist(Class type) {
-        regist(null, type.getMethods());
+    public void register(Class type) {
+        OutgoingManager.this.register(null, type.getMethods());
     }
 
-    public void regist(Object action) {
+    public void register(Object action) {
         if (action instanceof Class) {
-            regist((Class) action);
+            OutgoingManager.this.register((Class) action);
         } else {
-            regist(action, action.getClass().getMethods());
+            OutgoingManager.this.register(action, action.getClass().getMethods());
         }
     }
 
-    protected void regist(Object action, Method[] methods) {
+    protected void register(Object action, Method[] methods) {
         for (Method method : methods) {
             Outgoing actionAnno = method.getAnnotation(Outgoing.class);
             if (actionAnno == null) {
                 continue;
             }
             for (String macro : actionAnno.value()) {
-                regist(action, method, macro);
+                OutgoingManager.this.register(action, method, macro);
             }
         }
         Collections.sort(handlers);
     }
 
-    protected void regist(Object action, Method method, String macro) {
+    protected void register(Object action, Method method, String macro) {
         HandlerConfig config = HandlerConfig.create(action, method, macro);
         if (!config.hasMacros()) {
             directHandlers.put(macro, config);

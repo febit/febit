@@ -171,7 +171,7 @@ public class ActionManager implements Component {
                 }
                 Annotation actionAnno = actionClass.getAnnotation(Action.class);
                 if (actionAnno != null) {
-                    regist(actionClass);
+                    ActionManager.this.register(actionClass);
                 }
             }
         };
@@ -186,20 +186,20 @@ public class ActionManager implements Component {
         scanner.scanDefaultClasspath();
     }
 
-    public void regist(Class type) {
-        regist(createActionInstance(type), false);
+    public void register(Class type) {
+        register(createActionInstance(type), false);
     }
 
     public void replace(Object action) {
-        regist(action, true);
+        register(action, true);
     }
 
-    public void regist(Object action, boolean replace) {
+    public void register(Object action, boolean replace) {
         final Class type = action.getClass();
         for (Method method : type.getMethods()) {
             Action actionAnno = method.getAnnotation(Action.class);
             if (actionAnno != null) {
-                regist(createActionConfig(action, method));
+                register(createActionConfig(action, method));
             }
         }
     }
@@ -213,8 +213,8 @@ public class ActionManager implements Component {
         group.add(actionConfig);
     }
 
-    protected void regist(ActionConfig actionConfig) {
-        regist(actionConfig, false);
+    protected void register(ActionConfig actionConfig) {
+        register(actionConfig, false);
     }
 
     /**
@@ -223,7 +223,7 @@ public class ActionManager implements Component {
      * @param actionConfig
      * @param replace
      */
-    protected void regist(ActionConfig actionConfig, boolean replace) {
+    protected void register(ActionConfig actionConfig, boolean replace) {
         ActionConfig old = actionConfigMap.put(actionConfig.path, actionConfig);
         if (old == null) {
             final String path = actionConfig.path;
