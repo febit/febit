@@ -27,10 +27,10 @@
     <lib.slf4j.version>1.7.21</lib.slf4j.version>
   </properties>
   <modules>
+    <module>febit-schedule</module>
+    <module>febit-leancloud</module>
     <module>febit-web</module>
     <module>febit-bearychat</module>
-    <module>febit-leancloud</module>
-    <module>febit-schedule</module>
   </modules>
   <repositories>
     <repository>
