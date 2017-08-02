@@ -18,11 +18,13 @@ package org.febit.schedule;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
 import org.febit.lang.Time;
 import org.febit.schedule.cron.CronParser;
 import org.febit.schedule.cron.InvalidCronException;
 import org.febit.schedule.cron.Matcher;
 import org.febit.schedule.impl.DefaultTaskExecutorFactory;
+import org.febit.schedule.impl.ExecutorServiceTaskExecutorFactory;
 import org.febit.schedule.util.ThreadUtil;
 
 /**
@@ -76,6 +78,10 @@ public class Scheduler {
 
     public void setExecutorFactory(TaskExecutorFactory executorFactory) {
         this.executorFactory = executorFactory;
+    }
+
+    public void setExecutorFactory(ExecutorService executorService) {
+        setExecutorFactory(new ExecutorServiceTaskExecutorFactory(executorService));
     }
 
     public boolean isStarted() {

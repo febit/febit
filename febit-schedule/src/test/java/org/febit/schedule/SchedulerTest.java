@@ -15,7 +15,13 @@
  */
 package org.febit.schedule;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.febit.lang.Time;
+import org.febit.schedule.impl.ExecutorServiceTaskExecutorFactory;
+import org.testng.annotations.Test;
 
 /**
  *
@@ -25,7 +31,7 @@ public class SchedulerTest {
 
     public static final int ONE_HOUR = 60 * 60 * 1000;
 
-    //@org.testng.annotations.Test
+    @Test(groups = {"ignore"})
     public void schedule() throws InterruptedException {
 
         Scheduler scheduler = new Scheduler();
@@ -85,19 +91,39 @@ public class SchedulerTest {
         startScheduler(scheduler);
     }
 
-    //@org.testng.annotations.Test
+    @Test(groups = {"ignore"})
     public void schedule2() {
 
+        final AtomicInteger _id = new AtomicInteger(1);
         final Scheduler scheduler = new Scheduler();
+        final ExecutorService executorService;
+        //executorService = Executors.newSingleThreadExecutor();
+        executorService = Executors.newCachedThreadPool();
+        scheduler.setExecutorFactory(executorService);
+
+        scheduler.addTask("*", new Task() {
+            @Override
+            public void execute(TaskContext context) {
+                int id = _id.getAndIncrement();
+                println(" start " + id, context.getTime());
+                sleep(125 * 1000);
+                println(" end " + id, context.getTime());
+            }
+
+            @Override
+            public String getTaskName() {
+                return "*";
+            }
+        });
 
         scheduler.addTask("*", new Task() {
 
             @Override
             public void execute(TaskContext context) {
-
-                println(" start", context.getTime());
-                sleep(90 * 1000);
-                println(" end", context.getTime());
+                println(" *", context.getTime());
+                if (executorService instanceof ThreadPoolExecutor) {
+                    println(" current pool size: " + ((ThreadPoolExecutor) executorService).getPoolSize(), context.getTime());
+                }
             }
 
             @Override
@@ -109,7 +135,7 @@ public class SchedulerTest {
         startScheduler(scheduler);
     }
 
-    //@org.testng.annotations.Test
+    @Test(groups = {"ignore"})
     public void schedule3() {
 
         final Scheduler scheduler = new Scheduler();
@@ -132,7 +158,7 @@ public class SchedulerTest {
         startScheduler(scheduler);
     }
 
-    //@org.testng.annotations.Test
+    @Test(groups = {"ignore"})
     public void schedule4() {
 
         final Scheduler scheduler = new Scheduler();
@@ -178,12 +204,12 @@ public class SchedulerTest {
 
     }
 
-    public static void startScheduler(Scheduler scheduler) {
+    protected static void startScheduler(Scheduler scheduler) {
         scheduler.start();
         sleep(ONE_HOUR);
     }
 
-    public static void sleep(long millis) {
+    protected static void sleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException ignore) {
