@@ -22,14 +22,18 @@ import org.febit.schedule.util.ThreadUtil;
  *
  * @author zqq90
  */
-public class DefaultTaskExecutor extends AbstractTaskExecutor {
+public class ThreadTaskExecutor extends AbstractTaskExecutor {
 
     protected final String threadNamePrefix;
-    protected Thread executeThread;
+    protected volatile Thread executeThread;
 
-    public DefaultTaskExecutor(Task task) {
+    public ThreadTaskExecutor(Task task) {
+        this("schedule-" + task.getTaskName() + '-', task);
+    }
+
+    public ThreadTaskExecutor(String threadNamePrefix, Task task) {
         super(task);
-        this.threadNamePrefix = "schedule-" + task.getTaskName() + '-';
+        this.threadNamePrefix = threadNamePrefix;
     }
 
     @Override

@@ -27,6 +27,6 @@ public class DefaultTaskExecutorFactory implements TaskExecutorFactory {
 
     @Override
     public TaskExecutor createTaskExecutor(Task task) {
-        return new DefaultTaskExecutor(task);
+        return new ThreadTaskExecutor(task);
     }
 }
