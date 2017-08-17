@@ -47,7 +47,7 @@ public class RenderUtil {
         if (result.success()) {
             return RenderUtil.renderSuccessJson(actionRequest);
         }
-        return RenderUtil.renderErrorJson(actionRequest, result.code, result.msg, result.args);
+        return RenderUtil.renderErrorJson(actionRequest, result.code, result.msg, result.getArgs());
     }
 
     public static Object renderSuccessJson(ActionRequest actionRequest) throws IOException {
