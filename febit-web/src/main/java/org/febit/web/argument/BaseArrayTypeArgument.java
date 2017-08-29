@@ -31,7 +31,7 @@ public class BaseArrayTypeArgument implements Argument {
         if (raw == null) {
             return null;
         }
-        String[] array = StringUtil.toArrayExcludeCommit(raw);
+        String[] array = StringUtil.toArrayOmitCommit(raw);
         final int len = array.length;
         if (type == int[].class) {
             int[] result = new int[len];

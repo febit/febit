@@ -54,7 +54,7 @@ public class PermissionUtil {
             return;
         }
         final ActionManager actionManager = WebApp.component(ActionManager.class);
-        for (String string : StringUtil.toArrayExcludeCommit(ruleRaw)) {
+        for (String string : StringUtil.toArrayOmitCommit(ruleRaw)) {
             if (string.charAt(0) == '-') {
                 List<String> paths = actionManager.getMatchPaths(string.substring(1).trim());
                 if (paths != null) {

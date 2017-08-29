@@ -30,12 +30,7 @@ public class StringArrayTypeArgument implements Argument {
         if (raw == null) {
             return null;
         }
-        return StringUtil.toArrayExcludeCommit(raw);
-//        String[] array = request.request.getParameterValues(name);
-//        if (array == null) {
-//            return null;
-//        }
-//        return array;
+        return StringUtil.toArrayOmitCommit(raw);
     }
 
     @Override
