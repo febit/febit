@@ -28,6 +28,7 @@
   </properties>
   <modules>
     <module>febit-schedule</module>
+    <module>febit-arango</module>
     <module>febit-leancloud</module>
     <module>febit-web</module>
     <module>febit-bearychat</module>
