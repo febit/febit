@@ -60,8 +60,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ActionManager implements Component {
 
-    protected static final Logger log = LoggerFactory.getLogger(ActionManager.class);
-    protected static final BeanTemplateParser beanTemplateParser = new BeanTemplateParser();
+    protected static final Logger LOG = LoggerFactory.getLogger(ActionManager.class);
+    protected static final BeanTemplateParser PATH_TEMPLATE_PARSER = new BeanTemplateParser();
 
     protected final Map<String, ActionConfig> actionConfigMap = new HashMap<>();
     protected final Map<String, List<String>> actionMatchMap = new HashMap<>();
@@ -126,13 +126,15 @@ public class ActionManager implements Component {
             }
         }
         final int size = map.size();
-        final String[] pkgs = this._basePkgs = map.keySet().toArray(new String[size]);
+        final String[] pkgs = map.keySet().toArray(new String[size]);
         Arrays.sort(pkgs);
         ArraysUtil.invert(pkgs);
-        final String[] paths = this._basePkgPaths = new String[size];
+        this._basePkgs = pkgs;
+        final String[] paths = new String[size];
         for (int i = 0; i < size; i++) {
             paths[i] = map.get(pkgs[i]);
         }
+        this._basePkgPaths = paths;
     }
 
     protected synchronized int nextId() {
@@ -140,19 +142,32 @@ public class ActionManager implements Component {
     }
 
     public ActionRequest buildActionRequest(HttpServletRequest request, HttpServletResponse response) {
-        final ActionConfig actionConfig = actionConfigMap.get(ServletUtil.getRequestPath(request));
-        if (actionConfig != null) {
-            if (ServletUtil.isMultipartRequest(request)) {
-                MultipartRequestWrapper wrapper = new MultipartRequestWrapper(request, uploadFileFactory);
-                try {
-                    wrapper.parseRequestStream("UTF-8");
-                    request = wrapper;
-                } catch (IOException ignore) {
-                }
-            }
-            return new ActionRequest(actionConfig, request, response);
+        String path = ServletUtil.getRequestPath(request);
+        return buildActionRequest(path, request, response);
+    }
+
+    /**
+     * Build ActionRequest for a http request.
+     *
+     * @param path
+     * @param request
+     * @param response
+     * @return if not found will returns null.
+     */
+    public ActionRequest buildActionRequest(String path, HttpServletRequest request, HttpServletResponse response) {
+        final ActionConfig actionConfig = actionConfigMap.get(path);
+        if (actionConfig == null) {
+            return null;
         }
-        return null;
+        if (ServletUtil.isMultipartRequest(request)) {
+            MultipartRequestWrapper wrapper = new MultipartRequestWrapper(request, uploadFileFactory);
+            try {
+                wrapper.parseRequestStream("UTF-8");
+                request = wrapper;
+            } catch (IOException ignore) {
+            }
+        }
+        return new ActionRequest(actionConfig, request, response);
     }
 
     public void scanActions() {
@@ -294,25 +309,25 @@ public class ActionManager implements Component {
 
     protected Wrapper[] sort(final Wrapper[] wrappers) {
         final int len = wrappers.length;
-        final Wrapper[] newWrappers = new Wrapper[len];
+        final Wrapper[] sorted = new Wrapper[len];
 
         int curr = 0;
         for (int i = 0; i < len; i++) {
             if (wrappers[i] instanceof RenderedFilter) {
-                newWrappers[curr++] = wrappers[i];
+                sorted[curr++] = wrappers[i];
                 wrappers[i] = null;
             }
         }
         if (curr == 0) {
+            // without changes
             return wrappers;
         }
-        for (int i = 0; i < len; i++) {
-            Wrapper wrapper = wrappers[i];
+        for (Wrapper wrapper : wrappers) {
             if (wrapper != null) {
-                newWrappers[curr++] = wrapper;
+                sorted[curr++] = wrapper;
             }
         }
-        return newWrappers;
+        return sorted;
     }
 
     protected void resolveWrappers(List<Wrapper> list, String... names) {
@@ -401,10 +416,10 @@ public class ActionManager implements Component {
             path = '/' + path;
         }
         if (path.indexOf("${") > 0) {
-            path = beanTemplateParser.parse(path, action);
+            path = PATH_TEMPLATE_PARSER.parse(path, action);
         }
-        if (log.isDebugEnabled()) {
-            log.debug("MAPPED: {}#{} -> {}", type, method.getName(), path);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("MAPPED: {}#{} -> {}", type, method.getName(), path);
         }
         return path;
     }
