@@ -26,8 +26,8 @@ public class UTF8EncodingFilter implements RenderedFilter {
 
     @Override
     public Object invoke(final ActionRequest actionRequest) throws Exception {
-        actionRequest.request.setCharacterEncoding("UTF-8");
-        actionRequest.response.setCharacterEncoding("UTF-8");
+        actionRequest.request.setCharacterEncoding("utf-8");
+        actionRequest.response.setCharacterEncoding("utf-8");
         return actionRequest.invoke();
     }
 }
