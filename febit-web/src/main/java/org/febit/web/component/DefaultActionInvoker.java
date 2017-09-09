@@ -18,7 +18,7 @@ package org.febit.web.component;
 import org.febit.lang.Defaults;
 import org.febit.web.ActionConfig;
 import org.febit.web.ActionRequest;
-import org.febit.web.argument.Argument;
+import org.febit.web.argument.ArgumentConfig;
 
 /**
  *
@@ -29,19 +29,20 @@ public class DefaultActionInvoker implements Wrapper {
     @Override
     public Object invoke(final ActionRequest request) throws Exception {
         final ActionConfig actionConfig = request.actionConfig;
-        final Class[] argTypes = actionConfig.argTypes;
-        final int argsLen = argTypes.length;
-        final Object[] args;
-        if (argsLen == 0) {
-            args = Defaults.EMPTY_OBJECTS;
-        } else {
-            args = new Object[argsLen];
-            final String[] argNames = actionConfig.argNames;
-            final Argument[] arguments = actionConfig.arguments;
-            for (int i = 0; i < argsLen; i++) {
-                args[i] = arguments[i].resolve(request, argTypes[i], argNames[i], i);
-            }
-        }
+        final Object[] args = resolveArguments(request);
         return actionConfig.method.invoke(actionConfig.action, args);
+    }
+
+    protected Object[] resolveArguments(final ActionRequest request) {
+        final ArgumentConfig[] arguments = request.actionConfig.arguments;
+        final int argsLen = arguments.length;
+        if (argsLen == 0) {
+            return Defaults.EMPTY_OBJECTS;
+        }
+        final Object[] args = new Object[argsLen];
+        for (int i = 0; i < argsLen; i++) {
+            args[i] = arguments[i].resolve(request);
+        }
+        return args;
     }
 }

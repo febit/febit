@@ -25,13 +25,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jodd.bean.BeanTemplateParser;
 import jodd.io.FileNameUtil;
 import jodd.io.findfile.ClassFinder;
 import jodd.io.findfile.ClassScanner;
-import org.febit.lang.Defaults;
 import org.febit.lang.IdentitySet;
 import org.febit.service.Services;
 import org.febit.util.ArraysUtil;
@@ -44,6 +44,7 @@ import org.febit.web.ActionRequest;
 import org.febit.web.Filters;
 import org.febit.web.RenderedFilter;
 import org.febit.web.argument.Argument;
+import org.febit.web.argument.ArgumentConfig;
 import org.febit.web.meta.Action;
 import org.febit.web.meta.Filter;
 import org.febit.web.meta.In;
@@ -62,6 +63,7 @@ public class ActionManager implements Component {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ActionManager.class);
     protected static final BeanTemplateParser PATH_TEMPLATE_PARSER = new BeanTemplateParser();
+    protected static final ArgumentConfig[] EMPTY_ARGS = new ArgumentConfig[0];
 
     protected final Map<String, ActionConfig> actionConfigMap = new HashMap<>();
     protected final Map<String, List<String>> actionMatchMap = new HashMap<>();
@@ -80,7 +82,7 @@ public class ActionManager implements Component {
     protected Petite petite;
     protected ArgumentManager argumentManager;
 
-    protected int _nextId = 0;
+    protected AtomicInteger _nextId = new AtomicInteger(0);
     protected String[] _basePkgs;
     protected String[] _basePkgPaths;
     protected Wrapper[] _defaultWrappers;
@@ -137,10 +139,6 @@ public class ActionManager implements Component {
         this._basePkgPaths = paths;
     }
 
-    protected synchronized int nextId() {
-        return _nextId++;
-    }
-
     public ActionRequest buildActionRequest(HttpServletRequest request, HttpServletResponse response) {
         String path = ServletUtil.getRequestPath(request);
         return buildActionRequest(path, request, response);
@@ -171,7 +169,7 @@ public class ActionManager implements Component {
     }
 
     public void scanActions() {
-
+        final List<Class> actionClasses = new ArrayList<>();
         final ClassScanner scanner = new ClassScanner() {
 
             @Override
@@ -181,13 +179,18 @@ public class ActionManager implements Component {
                     return;
                 }
                 Class actionClass = ClassUtil.getClass(className);
+                if (ClassUtil.isAbstract(actionClass)) {
+                    return;
+                }
                 if (discardCache.contains(actionClass)) {
                     return;
                 }
                 Annotation actionAnno = actionClass.getAnnotation(Action.class);
-                if (actionAnno != null) {
-                    ActionManager.this.register(actionClass);
+                if (actionAnno == null) {
+                    return;
                 }
+                LOG.debug("Find action: {}", actionClass);
+                actionClasses.add(actionClass);
             }
         };
         String[] basePkgs = this._basePkgs;
@@ -199,6 +202,11 @@ public class ActionManager implements Component {
         scanner.setIncludeResources(false);
         scanner.setIncludedEntries(includes);
         scanner.scanDefaultClasspath();
+
+        // register actions
+        for (Class actionClass : actionClasses) {
+            register(actionClass);
+        }
     }
 
     public void register(Class type) {
@@ -213,19 +221,33 @@ public class ActionManager implements Component {
         final Class type = action.getClass();
         for (Method method : type.getMethods()) {
             Action actionAnno = method.getAnnotation(Action.class);
-            if (actionAnno != null) {
-                register(createActionConfig(action, method));
+            if (actionAnno == null) {
+                continue;
             }
+            register(createActionConfig(action, method), replace);
         }
     }
 
-    protected void putToMatchMap(String key, String actionConfig) {
+    protected void registerToMatchMap(String path) {
+        int index = 0;
+        for (;;) {
+            index = path.indexOf('/', index + 1);
+            if (index <= 0) {
+                break;
+            }
+            putToMatchMap(path.substring(0, index) + '*', path);
+        }
+        putToMatchMap("*", path);
+        putToMatchMap(path, path);
+    }
+
+    protected void putToMatchMap(String key, String fullPath) {
         List<String> group = this.actionMatchMap.get(key);
         if (group == null) {
             group = new ArrayList<>();
             this.actionMatchMap.put(key, group);
         }
-        group.add(actionConfig);
+        group.add(fullPath);
     }
 
     protected void register(ActionConfig actionConfig) {
@@ -240,22 +262,12 @@ public class ActionManager implements Component {
      */
     protected void register(ActionConfig actionConfig, boolean replace) {
         ActionConfig old = actionConfigMap.put(actionConfig.path, actionConfig);
-        if (old == null) {
-            final String path = actionConfig.path;
-            int index = 0;
-            for (;;) {
-                index = path.indexOf('/', index + 1);
-                if (index <= 0) {
-                    break;
-                }
-                putToMatchMap(path.substring(0, index) + '*', path);
-            }
-            putToMatchMap("*", path);
-            putToMatchMap(path, path);
-            pathTokens.put(path, Wildcard.splitcPathPattern(path));
-        } else if (!replace) {
+        if (old != null && !replace) {
             throw new RuntimeException("Duplicate action path '" + actionConfig.method + "' vs.'" + old.method + "'");
         }
+        final String path = actionConfig.path;
+        registerToMatchMap(path);
+        pathTokens.put(path, Wildcard.splitcPathPattern(path));
     }
 
     public List<String> getMatchPaths(String key) {
@@ -274,37 +286,36 @@ public class ActionManager implements Component {
     }
 
     protected ActionConfig createActionConfig(final Object action, final Method method) {
-
-        Class[] argTypes = method.getParameterTypes();
-
-        final int argLen = argTypes.length;
-        final Argument[] arguments;
-        final String[] argNames;
-        if (argLen != 0) {
-            argNames = new String[argLen];
-            arguments = new Argument[argLen];
-            final Annotation[][] annotationses = method.getParameterAnnotations();
-            for (int i = 0; i < argLen; i++) {
-                Annotation[] annotations = annotationses[i];
-                for (Annotation annotation : annotations) {
-                    if (annotation.annotationType() == In.class) {
-                        String name = ((In) annotation).value();
-                        if (name != null && name.length() != 0) {
-                            argNames[i] = name;
-                        }
-                    }
-                }
-                arguments[i] = argumentManager.resolveArgument(argTypes[i], argNames[i], i);
-            }
-        } else {
-            argTypes = Defaults.EMPTY_CLASSES;
-            argNames = Defaults.EMPTY_STRINGS;
-            arguments = null;
-        }
-
         String path = resolvePath(action, method);
         Wrapper[] wrappers = resolveWrappers(action, method);
-        return new ActionConfig(nextId(), action, method, path, argTypes, argNames, arguments, wrappers);
+        ArgumentConfig[] arguments = resolveArgumentConfigs(action, method);
+        return new ActionConfig(_nextId.incrementAndGet(), action, method, path, arguments, wrappers);
+    }
+
+    protected ArgumentConfig[] resolveArgumentConfigs(final Object action, final Method method) {
+        final Class[] argTypes = method.getParameterTypes();
+        final int argLen = argTypes.length;
+        if (argLen == 0) {
+            return EMPTY_ARGS;
+        }
+        final ArgumentConfig[] arguments = new ArgumentConfig[argLen];
+        final Annotation[][] annotationses = method.getParameterAnnotations();
+        for (int i = 0; i < argLen; i++) {
+            String name = null;
+            Class<?> argType = argTypes[i];
+            for (Annotation annotation : annotationses[i]) {
+                if (annotation.annotationType() == In.class) {
+                    name = ((In) annotation).value();
+                    break;
+                }
+            }
+            if (name != null && name.isEmpty()) {
+                name = null;
+            }
+            Argument argument = argumentManager.resolveArgument(argType, name, i);
+            arguments[i] = new ArgumentConfig(i, name, argType, argument);
+        }
+        return arguments;
     }
 
     protected Wrapper[] sort(final Wrapper[] wrappers) {
@@ -372,7 +383,7 @@ public class ActionManager implements Component {
 
     protected String resolvePath(final Object action, final Method method) {
 
-        final Class type = action.getClass();
+        final Class<?> type = action.getClass();
 
         //method path
         Action methodAnno = method.getAnnotation(Action.class);
@@ -386,7 +397,7 @@ public class ActionManager implements Component {
 
         if (path == null || path.charAt(0) != '/') {
             //append class path
-            Action actionAnno = (Action) type.getAnnotation(Action.class);
+            Action actionAnno = type.getAnnotation(Action.class);
             String actionClassPath = actionAnno.value();
             if (actionClassPath == null || actionClassPath.isEmpty()) {
                 actionClassPath = StringUtil.lowerFirst(StringUtil.cutSuffix(type.getSimpleName(), "Action"));
@@ -418,13 +429,12 @@ public class ActionManager implements Component {
         if (path.indexOf("${") > 0) {
             path = PATH_TEMPLATE_PARSER.parse(path, action);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("MAPPED: {}#{} -> {}", type, method.getName(), path);
-        }
+        LOG.debug("Action: {}#{} -> {}", type, method.getName(), path);
         return path;
     }
 
     protected Object createActionInstance(Class type) {
+        LOG.debug("Creating action {} ...", type);
         final Object action = ClassUtil.newInstance(type);
         Services.inject(action);
         return action;

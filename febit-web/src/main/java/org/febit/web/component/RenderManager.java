@@ -33,9 +33,9 @@ public class RenderManager implements Component {
     protected final ConcurrentIdentityMap<Render> renderCache;
 
     protected Render[] renders;
-    protected Petite petite;
-
     protected Render defaultRender;
+
+    protected Petite petite;
 
     public RenderManager() {
         this.renderCache = new ConcurrentIdentityMap<>();
@@ -57,14 +57,14 @@ public class RenderManager implements Component {
 
     protected Render resolveRender(final ActionRequest actionRequest, final Object result) {
         Render render = null;
-        for (Class type : ClassUtil.impls(result.getClass())) {
+        for (Class<?> type : ClassUtil.impls(result.getClass())) {
             render = renderCache.get(type);
             if (render != null) {
                 break;
             }
-            Annotation anno = type.getAnnotation(RenderWith.class);
+            RenderWith anno = type.getAnnotation(RenderWith.class);
             if (anno != null) {
-                Class renderClass = ((RenderWith) anno).value();
+                Class renderClass = anno.value();
                 render = renderCache.get(renderClass);
                 if (render != null) {
                     break;

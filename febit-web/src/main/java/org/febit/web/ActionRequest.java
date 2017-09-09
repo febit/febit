@@ -30,7 +30,6 @@ public class ActionRequest {
     public final HttpServletResponse response;
 
     protected final Wrapper[] wrappers;
-    protected final int totalWrappers;
     protected int currentIndex = 0;
 
     public ActionRequest(ActionConfig actionConfig, HttpServletRequest request, HttpServletResponse response) {
@@ -38,7 +37,6 @@ public class ActionRequest {
         this.request = request;
         this.response = response;
         this.wrappers = actionConfig.wrappers;
-        this.totalWrappers = this.wrappers.length;
     }
 
     public final Object invoke() throws Exception {

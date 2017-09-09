@@ -16,7 +16,7 @@
 package org.febit.web;
 
 import java.lang.reflect.Method;
-import org.febit.web.argument.Argument;
+import org.febit.web.argument.ArgumentConfig;
 import org.febit.web.component.Wrapper;
 import org.febit.web.meta.IgnoreXsrf;
 
@@ -32,18 +32,14 @@ public class ActionConfig {
     public final String path;
     public final boolean isHtml;
     public final boolean isIgnoreXsrf;
-    public final Class[] argTypes;
-    public final String[] argNames;
-    public final Argument[] arguments;
+    public final ArgumentConfig[] arguments;
     public final Wrapper[] wrappers;
 
-    public ActionConfig(int id, Object action, Method method, String path, Class[] argTypes, String[] argNames, Argument[] arguments, Wrapper[] wrappers) {
+    public ActionConfig(int id, Object action, Method method, String path, ArgumentConfig[] arguments, Wrapper[] wrappers) {
         this.id = id;
         this.action = action;
         this.method = method;
         this.path = path;
-        this.argTypes = argTypes;
-        this.argNames = argNames;
         this.arguments = arguments;
         this.wrappers = wrappers;
         this.isHtml = path.endsWith(".html") || path.endsWith("htm");
