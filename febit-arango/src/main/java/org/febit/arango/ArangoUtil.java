@@ -130,7 +130,7 @@ public class ArangoUtil {
         }
 
         final List<ArangoLinkInfo> list = new ArrayList<>();
-        for (Field field : ClassUtil.getAccessableMemberFields(type)) {
+        for (Field field : ClassUtil.getMemberFields(type)) {
             if (field.getType() != String.class) {
                 continue;
             }
@@ -251,29 +251,26 @@ public class ArangoUtil {
         }
 
         @Override
-        protected void registSetterMethod(String name, Method method) {
+        protected boolean filter(Method method) {
             if (method.getAnnotation(Arango.class) == null) {
-                return;
+                return false;
             }
-            super.registSetterMethod(name, method);
+            return super.filter(method);
         }
 
         @Override
-        protected void registGetterMethod(String name, Method method) {
-            if (method.getAnnotation(Arango.class) == null) {
-                return;
+        protected boolean filter(Field field) {
+            if (ClassUtil.isTransient(field)) {
+                return false;
             }
-            super.registGetterMethod(name, method);
+            if (field.getAnnotation(ArangoIgnore.class) != null) {
+                return false;
+            }
+            return super.filter(field);
         }
 
         @Override
         protected void registField(String name, Field field) {
-            if (ClassUtil.isTransient(field)) {
-                return;
-            }
-            if (field.getAnnotation(ArangoIgnore.class) != null) {
-                return;
-            }
             if (field.getAnnotation(ArangoId.class) != null) {
                 super.registField("_key", field);
                 return;
