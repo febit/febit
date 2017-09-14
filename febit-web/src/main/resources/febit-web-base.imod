@@ -5,6 +5,7 @@
   renderManager
 '''
 
+[argumentManager :org.febit.web.component.ArgumentManager]
 [renderWrapper :org.febit.web.component.DefaultRenderWrapper]
 [uploadFileFactory :org.febit.web.upload.UploadFileFactory]
 
@@ -32,7 +33,7 @@ renders='''
 '''
 
 
-[argumentManager :org.febit.web.component.ArgumentManager]
+[argumentManager]
 defaultArgument=org.febit.web.argument.BeanArgument
 arguments='''
   org.febit.web.argument.BaseArrayTypeArgument
@@ -49,13 +50,15 @@ arguments='''
 uploadFileFactory=uploadFileFactory
 renderWrapper=renderWrapper
 actionInvoker=org.febit.web.component.DefaultActionInvoker
-defaultFilters=defaultFilters
+defaultFilters=filters-default
 scan='''
 /    org.febit.app.action
 '''
 
 
-
-[defaultFilters :filters]
+[filters-default: defaultFilters]
 filters='''
 '''
+
+# Deprecated
+[defaultFilters :filters]

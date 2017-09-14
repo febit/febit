@@ -17,13 +17,13 @@ package org.febit.web.filter;
 
 import org.febit.util.Stopwatch;
 import org.febit.web.ActionRequest;
-import org.febit.web.RenderedFilter;
+import org.febit.web.OuterFilter;
 
 /**
  *
  * @author zqq90
  */
-public class StopwatchFilter implements RenderedFilter {
+public class StopwatchFilter implements OuterFilter {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(StopwatchFilter.class);
 

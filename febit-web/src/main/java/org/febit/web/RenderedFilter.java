@@ -15,12 +15,12 @@
  */
 package org.febit.web;
 
-import org.febit.web.component.Wrapper;
-
 /**
  *
  * @author zqq90
+ * @deprecated use OuterFilter instead
  */
-public interface RenderedFilter extends Wrapper {
+@Deprecated
+public interface RenderedFilter extends OuterFilter {
 
 }

@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.web.filter;
+package org.febit.web;
 
-import org.febit.web.ActionRequest;
-import org.febit.web.OuterFilter;
+import org.febit.web.component.Wrapper;
 
 /**
+ * Outer Filter.
+ *
+ * Outer filters will be reordered to the position before RenderWrapper, objects returned by outer filters
+ * will not be rendered to response.
+ *
  *
  * @author zqq90
  */
-public class UTF8EncodingFilter implements OuterFilter {
+public interface OuterFilter extends Wrapper {
 
-    @Override
-    public Object invoke(final ActionRequest actionRequest) throws Exception {
-        actionRequest.request.setCharacterEncoding("utf-8");
-        actionRequest.response.setCharacterEncoding("utf-8");
-        return actionRequest.invoke();
-    }
 }

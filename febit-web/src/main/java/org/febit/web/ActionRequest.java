@@ -47,4 +47,9 @@ public class ActionRequest {
         this.request.setAttribute(key, value);
         return this;
     }
+
+    public Object attr(String key) {
+        this.request.getAttribute(key);
+        return this;
+    }
 }

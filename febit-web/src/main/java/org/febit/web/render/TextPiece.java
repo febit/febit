@@ -24,12 +24,12 @@ import org.febit.web.ActionRequest;
  *
  * @author zqq90
  */
-public class TextArray implements Renderable {
+public class TextPiece implements Renderable {
 
     protected final String mimetype;
     protected final String[] array;
 
-    public TextArray(String mimetype, String... array) {
+    public TextPiece(String mimetype, String... array) {
         this.mimetype = mimetype;
         this.array = array;
     }

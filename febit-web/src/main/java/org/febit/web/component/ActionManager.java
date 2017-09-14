@@ -42,7 +42,6 @@ import org.febit.util.StringUtil;
 import org.febit.web.ActionConfig;
 import org.febit.web.ActionRequest;
 import org.febit.web.Filters;
-import org.febit.web.RenderedFilter;
 import org.febit.web.argument.Argument;
 import org.febit.web.argument.ArgumentConfig;
 import org.febit.web.meta.Action;
@@ -54,6 +53,7 @@ import org.febit.web.util.ServletUtil;
 import org.febit.web.util.Wildcard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.febit.web.OuterFilter;
 
 /**
  *
@@ -324,7 +324,7 @@ public class ActionManager implements Component {
 
         int curr = 0;
         for (int i = 0; i < len; i++) {
-            if (wrappers[i] instanceof RenderedFilter) {
+            if (wrappers[i] instanceof OuterFilter) {
                 sorted[curr++] = wrappers[i];
                 wrappers[i] = null;
             }

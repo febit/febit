@@ -18,13 +18,13 @@ package org.febit.web.filter;
 import java.io.OutputStream;
 import jodd.util.MimeTypes;
 import org.febit.web.ActionRequest;
-import org.febit.web.RenderedFilter;
+import org.febit.web.OuterFilter;
 
 /**
  *
  * @author zqq90
  */
-public class JsonpFilter implements RenderedFilter {
+public class JsonpFilter implements OuterFilter {
 
     protected String callbackKey = "_cb";
     protected String callbackDefault = "callback";
