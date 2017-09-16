@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-import java.util.regex.Pattern;
 import javax.servlet.ServletContext;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jodd.io.FileNameUtil;
@@ -147,24 +147,6 @@ public class ServletUtil {
         }
     }
 
-    private static final Pattern MOBILE_CLIENT = Pattern.compile("phone|android|mobile|wp7|wp8|ucweb", Pattern.CASE_INSENSITIVE);
-
-    public static boolean isMobileClient() {
-        return isMobileClient(WebApp.request().request);
-    }
-
-    public static boolean isMobileClient(HttpServletRequest request) {
-        if (request == null) {
-            return false;
-        }
-        String userAgent = request.getHeader("User-Agent");
-        if (userAgent == null) {
-            return false;
-        }
-        boolean ret = MOBILE_CLIENT.matcher(userAgent).find();
-        return ret;
-    }
-
     public static String getRequestPath(HttpServletRequest request) {
         String path = getServletPath(request);
         if (path == null || path.isEmpty()) {
@@ -179,6 +161,41 @@ public class ServletUtil {
             return result;
         }
         return request.getServletPath();
+    }
+
+    /**
+     * Get cookie by name.
+     *
+     * @param request
+     * @param name
+     * @return returns null if not found.
+     */
+    public static Cookie getCookie(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return null;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(name)) {
+                return cookie;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get cookie value by name.
+     *
+     * @param request
+     * @param name
+     * @return returns null if not found.
+     */
+    public static String getCookieValue(HttpServletRequest request, String name) {
+        Cookie cookie = getCookie(request, name);
+        if (cookie == null) {
+            return null;
+        }
+        return cookie.getValue();
     }
 
     public static void preventCaching(HttpServletResponse response) {
