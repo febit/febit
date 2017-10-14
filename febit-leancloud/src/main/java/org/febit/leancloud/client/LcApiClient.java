@@ -16,18 +16,12 @@
 package org.febit.leancloud.client;
 
 import java.io.Closeable;
-import java.util.List;
+import java.io.IOException;
 import java.util.Map;
-import jodd.http.Cookie;
-import jodd.http.HttpConnectionProvider;
-import jodd.http.HttpException;
-import jodd.http.HttpMultiMap;
-import jodd.http.HttpRequest;
-import jodd.http.HttpResponse;
-import jodd.http.JoddHttp;
-import jodd.http.LcHackUtil;
-import jodd.http.ProxyInfo;
-import jodd.util.StringPool;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import org.febit.easyokhttp.EasyRequest;
 import org.febit.lang.ConcurrentIdentityMap;
 import org.febit.leancloud.Condition;
 import org.febit.leancloud.Entity;
@@ -54,6 +48,15 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     public static final String APPLICATION_JSON = "application/json";
 
     private static final ConcurrentIdentityMap<String> TABLE_NAME_CACHE = new ConcurrentIdentityMap<>(64);
+
+    public static Builder<Builder, LcApiClient> builder() {
+        return new Builder<Builder, LcApiClient>() {
+            @Override
+            public LcApiClient build() {
+                return new LcApiClient(this);
+            }
+        };
+    }
 
     public static boolean isRequestFailed(int statusCode) {
         return statusCode < 200 || statusCode >= 300;
@@ -86,30 +89,35 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         return tableName;
     }
 
-    // ---> http client settings
-    protected boolean _keepAlive = false;
-    protected HttpConnectionProvider httpConnectionProvider = JoddHttp.httpConnectionProvider;
-    // ---->
-    protected final HttpMultiMap<String> defaultHeaders;
-    protected final HttpMultiMap<Cookie> cookies;
-    protected HttpResponse lastHttpResponse;
+    protected final Headers.Builder defaultHeaders;
+    protected final OkHttpClient okHttpClient;
 
     // -----> sign keys
-    protected boolean _initedSign = false;
-    protected String _appId;
-    protected String _appKey;
-    protected String _masterKey;
+    protected String _authSign = null;
+    protected final String appId;
+    protected final String appKey;
+    protected final String masterKey;
 
     // ----> remote settings
-    protected String _protocol = "https";
-    protected int _port = 443;
-    protected String _apiHost = "api.leancloud.cn";
-    protected String _apiVersion = "1.1";
+    protected final String scheme;
+    protected final int port;
+    protected final String apiHost;
+    protected final String apiVersion;
 
-    public LcApiClient() {
-        this.cookies = HttpMultiMap.newCaseInsensitveMap();
-        this.defaultHeaders = HttpMultiMap.newCaseInsensitveMap();
-        this.defaultHeaders.set(HEAD_ACCEPT, APPLICATION_JSON);
+    public LcApiClient(Builder builder) {
+        this.appId = builder.appId;
+        if (appId == null) {
+            throw new IllegalStateException("appId is required!");
+        }
+        this.appKey = builder.appKey;
+        this.masterKey = builder.masterKey;
+        this.scheme = builder.scheme;
+        this.port = builder.port;
+        this.apiHost = builder.apiHost;
+        this.apiVersion = builder.apiVersion;
+        this.okHttpClient = builder.httpClientBuilder.build();
+        this.defaultHeaders = builder.defaultHeaders.build().newBuilder();
+        this.defaultHeaders.set(HEAD_X_LC_ID, appId);
     }
 
     public <T extends Entity> LcFindResponse<T> find(String id, Class<T> entityType) {
@@ -121,9 +129,12 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
             throw new IllegalArgumentException("id is required");
         }
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("GET")
-                .path('/' + _apiVersion + "/classes/" + table + '/' + id);
+        EasyRequest request = new EasyRequest()
+                .get()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table)
+                .addPathSegment(id);
         if (keys != null && keys.length != 0) {
             request.query("keys", StringUtil.join(keys, ','));
         }
@@ -132,9 +143,11 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
 
     public <T extends Entity> LcQueryResponse<T> query(LcQuery query, Class<T> entityType) {
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("GET")
-                .path('/' + _apiVersion + "/classes/" + table);
+        EasyRequest request = new EasyRequest()
+                .get()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table);
 
         // http querys:
         if (query.isCount()) {
@@ -169,9 +182,12 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
             throw new IllegalArgumentException("id is required");
         }
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("DELETE")
-                .path('/' + _apiVersion + "/classes/" + table + '/' + id);
+        EasyRequest request = new EasyRequest()
+                .delete()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table)
+                .addPathSegment(id);
         return readBasicResponse(sendRequest(request));
     }
 
@@ -180,12 +196,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
             throw new IllegalArgumentException("id is required");
         }
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("DELETE");
+        EasyRequest request = new EasyRequest()
+                .delete()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table);
         if (id != null) {
-            request.path('/' + _apiVersion + "/classes/" + table + '/' + id);
-        } else {
-            request.path('/' + _apiVersion + "/classes/" + table);
+            request.addPathSegment(id);
         }
         if (where != null) {
             request.query("where", JsonUtil.toJsonString(where));
@@ -195,9 +212,11 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
 
     public <T extends Entity> LcCreateResponse save(T entity) {
         String table = getEntityTableName(entity);
-        HttpRequest request = new HttpRequest()
-                .method("POST")
-                .path('/' + _apiVersion + "/classes/" + table);
+        EasyRequest request = new EasyRequest()
+                .post()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table);
         setJsonBody(request, entity);
         return readBasicResponse(sendRequest(request));
     }
@@ -207,9 +226,12 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
             throw new IllegalArgumentException("entity.id is required");
         }
         String table = getEntityTableName(entity);
-        HttpRequest request = new HttpRequest()
-                .method("PUT")
-                .path('/' + _apiVersion + "/classes/" + table + '/' + entity.id());
+        EasyRequest request = new EasyRequest()
+                .put()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table)
+                .addPathSegment(entity.id());
         setJsonBody(request, entity, "objectId");
         return readBasicResponse(sendRequest(request));
     }
@@ -219,21 +241,25 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
             throw new IllegalArgumentException("id is required");
         }
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("PUT")
-                .path('/' + _apiVersion + "/classes/" + table + '/' + id);
+        EasyRequest request = new EasyRequest()
+                .put()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table)
+                .addPathSegment(id);
         setJsonBody(request, changes);
         return readBasicResponse(sendRequest(request));
     }
 
     public <T extends Entity> LcUpdateResponse update(T entity, Condition where) {
         String table = getEntityTableName(entity);
-        HttpRequest request = new HttpRequest()
-                .method("PUT");
+        EasyRequest request = new EasyRequest()
+                .put()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table);
         if (entity._isPersistent()) {
-            request.path('/' + _apiVersion + "/classes/" + table + '/' + entity.id());
-        } else {
-            request.path('/' + _apiVersion + "/classes/" + table);
+            request.addPathSegment(entity.id());
         }
         if (where != null) {
             request.query("where", JsonUtil.toJsonString(where));
@@ -244,12 +270,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
 
     public <T extends Entity> LcUpdateResponse update(String id, Class<T> entityType, Condition op, Condition where) {
         String table = getEntityTableName(entityType);
-        HttpRequest request = new HttpRequest()
-                .method("PUT");
+        EasyRequest request = new EasyRequest()
+                .put()
+                .addPathSegment(apiVersion)
+                .addPathSegment("classes")
+                .addPathSegment(table);
         if (id != null) {
-            request.path('/' + _apiVersion + "/classes/" + table + '/' + id);
-        } else {
-            request.path('/' + _apiVersion + "/classes/" + table);
+            request.addPathSegment(id);
         }
         if (where != null) {
             request.query("where", JsonUtil.toJsonString(where));
@@ -258,27 +285,20 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         return readBasicResponse(sendRequest(request));
     }
 
-    protected HttpRequest setJsonBody(HttpRequest request, Object obj) {
-        return request.bodyText(JsonUtil.toJsonString(obj), APPLICATION_JSON, "UTF-8");
+    protected EasyRequest setJsonBody(EasyRequest request, Object obj) {
+        return request.jsonBody(JsonUtil.toJsonString(obj));
     }
 
-    protected HttpRequest setJsonBody(HttpRequest request, Object obj, String... excludes) {
-        return request.bodyText(JsonUtil.toJsonString(obj, excludes), APPLICATION_JSON, "UTF-8");
+    protected EasyRequest setJsonBody(EasyRequest request, Object obj, String... excludes) {
+        return request.jsonBody(JsonUtil.toJsonString(obj, excludes));
     }
 
-    protected void updateApiHeaders() {
-        if (_appId == null) {
-            throw new IllegalStateException("appId is required!");
-        }
-        this.defaultHeaders.set(HEAD_X_LC_ID, _appId);
-        this.defaultHeaders.set(HEAD_X_LC_SIGN, resolveAppSign());
-        _initedSign = true;
+    public void resetAppSign() {
+        this._authSign = null;
     }
 
-    protected String resolveAppSign() {
+    protected String resolveAuthSign() {
         long now = getTimestamp();
-        String masterKey = this._masterKey;
-        String appKey = this._appKey;
         if (masterKey != null) {
             return EncryptUtil.md5(now + masterKey) + ',' + now + ",master";
         } else if (appKey != null) {
@@ -287,28 +307,28 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         throw new IllegalStateException("masterKey/appKey is required!");
     }
 
-    protected <E extends Entity> LcFindResponse<E> readFindResponse(HttpResponse httpResponse, Class<E> entityType) {
-        if (isRequestFailed(httpResponse.statusCode())) {
+    protected <E extends Entity> LcFindResponse<E> readFindResponse(Response httpResponse, Class<E> entityType) {
+        if (isRequestFailed(httpResponse.code())) {
             return readResponse(httpResponse, LcFindResponseImpl.class);
         }
         E entity;
         try {
-            entity = JsonUtil.parseJson(httpResponse.bodyText(), entityType);
+            entity = JsonUtil.parseJson(httpResponse.body().string(), entityType);
         } catch (Exception e) {
             LOG.error("Failed to parse response", e);
             return readResponse(503, null, LcFindResponseImpl.class);
         }
-        return LcFindResponseImpl.create(httpResponse.statusCode(), entity);
+        return LcFindResponseImpl.create(httpResponse.code(), entity);
     }
 
-    protected <E extends Entity> LcQueryResponse<E> readQueryResponse(HttpResponse httpResponse, Class<E> entityType) {
-        if (isRequestFailed(httpResponse.statusCode())) {
+    protected <E extends Entity> LcQueryResponse<E> readQueryResponse(Response httpResponse, Class<E> entityType) {
+        if (isRequestFailed(httpResponse.code())) {
             return readResponse(httpResponse, LcQueryResponseImpl.class);
         }
         LcQueryResponseImpl response;
         try {
-            response = JsonUtil.parseJson(httpResponse.bodyText(), LcQueryResponseImpl.class, "results.values", entityType);
-            response.setStatusCode(httpResponse.statusCode());
+            response = JsonUtil.parseJson(httpResponse.body().string(), LcQueryResponseImpl.class, "results.values", entityType);
+            response.setStatusCode(httpResponse.code());
         } catch (Exception e) {
             LOG.error("Failed to parse response", e);
             response = readResponse(503, null, LcQueryResponseImpl.class);
@@ -316,12 +336,18 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         return response;
     }
 
-    protected LcBasicResponse readBasicResponse(HttpResponse httpResponse) {
+    protected LcBasicResponse readBasicResponse(Response httpResponse) {
         return readResponse(httpResponse, LcBasicResponse.class);
     }
 
-    protected <T extends LcBasicResponse> T readResponse(HttpResponse httpResponse, Class<T> responseType) {
-        return readResponse(httpResponse.statusCode(), httpResponse.bodyText(), responseType);
+    protected <T extends LcBasicResponse> T readResponse(Response httpResponse, Class<T> responseType) {
+        String body;
+        try {
+            body = httpResponse.body().string();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+        return readResponse(httpResponse.code(), body, responseType);
     }
 
     protected <T extends LcBasicResponse> T readResponse(int statusCode, String responseText, Class<T> responseType) {
@@ -345,86 +371,31 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         return response;
     }
 
-    protected synchronized HttpResponse sendRequest(HttpRequest httpRequest) {
-        httpRequest.protocol(_protocol)
-                .host(_apiHost)
-                .port(_port);
-
-        for (int i = 0; i < MAX_REDIRECT; i++) {
-            HttpResponse previouseResponse = this.lastHttpResponse;
-            this.lastHttpResponse = null;
-            addDefaultHeaders(httpRequest);
-            // send request
-            try {
-                if (!_keepAlive) {
-                    httpRequest.open(httpConnectionProvider);
-                } else {
-                    // keeping alive
-                    if (previouseResponse == null) {
-                        httpRequest.open(httpConnectionProvider).connectionKeepAlive(true);
-                    } else {
-                        httpRequest.keepAlive(previouseResponse, true);
-                    }
-                }
-                this.lastHttpResponse = httpRequest.send();
-            } catch (HttpException e) {
-                this.lastHttpResponse = new HttpResponse();
-                this.lastHttpResponse.statusCode(503);
-                LcHackUtil.assignHttpRequest(lastHttpResponse, httpRequest);
-            }
-
-            switch (lastHttpResponse.statusCode()) {
-                // 301: moved permanently
-                case 301:
-                // 302: redirect, 303: see other
-                case 302:
-                case 303:
-                    String newPath = resolveLocation(lastHttpResponse);
-                    httpRequest = HttpRequest.get(newPath);
-                    continue;
-                // 307: temporary redirect
-                case 307:
-                    newPath = resolveLocation(lastHttpResponse);
-                    String originalMethod = httpRequest.method();
-                    httpRequest = new HttpRequest()
-                            .method(originalMethod)
-                            .set(newPath);
-                    continue;
-                default:
-            }
-
-            // break loops
-            break;
+    protected Response sendRequest(EasyRequest request) {
+        request.scheme(scheme)
+                .host(apiHost)
+                .port(port);
+        addDefaultHeaders(request);
+        try {
+            return request.send(okHttpClient);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
-        return this.lastHttpResponse;
     }
 
     /**
      * Add default headers to the request. If request already has a header set, default header will be ignored.
      *
-     * @param httpRequest
+     * @param request
      */
-    protected void addDefaultHeaders(HttpRequest httpRequest) {
-        if (!_initedSign) {
-            updateApiHeaders();
+    protected synchronized void addDefaultHeaders(EasyRequest request) {
+        String sign = this._authSign;
+        if (sign == null) {
+            sign = resolveAuthSign();
+            this._authSign = sign;
         }
-        List<Map.Entry<String, String>> entries = defaultHeaders.entries();
-        HttpMultiMap<String> headers = httpRequest.headers();
-        for (Map.Entry<String, String> entry : entries) {
-            String name = entry.getKey();
-            if (!headers.contains(name)) {
-                headers.add(name, entry.getValue());
-            }
-        }
-    }
-
-    protected String resolveLocation(HttpResponse httpResponse) {
-        String location = httpResponse.header("location");
-        if (location.startsWith(StringPool.SLASH)) {
-            HttpRequest httpRequest = httpResponse.getHttpRequest();
-            location = httpRequest.hostUrl() + location;
-        }
-        return location;
+        request.headers(defaultHeaders.build());
+        request.header(HEAD_X_LC_SIGN, sign);
     }
 
     protected long getTimestamp() {
@@ -432,81 +403,69 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     @Override
-    public synchronized void close() {
-        if (lastHttpResponse != null) {
-            lastHttpResponse.close();
+    public void close() {
+        okHttpClient.connectionPool().evictAll();
+    }
+
+    public static abstract class Builder<B extends Builder, C extends LcApiClient> {
+
+        protected final OkHttpClient.Builder httpClientBuilder;
+        protected final Headers.Builder defaultHeaders;
+
+        protected String appId;
+        protected String appKey;
+        protected String masterKey;
+
+        protected String scheme = "https";
+        protected int port = 443;
+        protected String apiHost = "api.leancloud.cn";
+        protected String apiVersion = "1.1";
+
+        protected Builder() {
+            this.defaultHeaders = new Headers.Builder();
+            this.defaultHeaders.set(HEAD_ACCEPT, APPLICATION_JSON);
+            this.httpClientBuilder = new OkHttpClient.Builder();
         }
-    }
 
-    // ----> 
-    /**
-     * Returns <code>true</code> if keep alive is used.
-     *
-     * @return if keep alive
-     */
-    public boolean isKeepAlive() {
-        return _keepAlive;
-    }
+        public abstract C build();
 
-    public C keepAlive() {
-        this._keepAlive = true;
-        return (C) this;
-    }
+        public OkHttpClient.Builder getHttpClientBuilder() {
+            return httpClientBuilder;
+        }
 
-    /**
-     * Defines that persistent HTTP connection should be used.
-     *
-     * @param keepAlive
-     * @return this client
-     */
-    public C setKeepAlive(boolean keepAlive) {
-        this._keepAlive = keepAlive;
-        return (C) this;
-    }
+        public B appId(String appId) {
+            this.appId = appId;
+            return (B) this;
+        }
 
-    /**
-     * Defines proxy for a browser.
-     *
-     * @param proxyInfo
-     * @return this client
-     */
-    public C setProxyInfo(ProxyInfo proxyInfo) {
-        httpConnectionProvider.useProxy(proxyInfo);
-        return (C) this;
-    }
+        public B appKey(String appKey) {
+            this.appKey = appKey;
+            return (B) this;
+        }
 
-    /**
-     * Defines {@link jodd.http.HttpConnectionProvider} for this browser session. Resets the previous proxy definition,
-     * if set.
-     *
-     * @param httpConnectionProvider
-     * @return this client
-     */
-    public C setHttpConnectionProvider(HttpConnectionProvider httpConnectionProvider) {
-        this.httpConnectionProvider = httpConnectionProvider;
-        return (C) this;
-    }
+        public B masterKey(String masterKey) {
+            this.masterKey = masterKey;
+            return (B) this;
+        }
 
-    public C setDefaultHeader(String name, String value) {
-        this.defaultHeaders.set(name, value);
-        return (C) this;
-    }
+        public B scheme(String scheme) {
+            this.scheme = scheme;
+            return (B) this;
+        }
 
-    public C setAppId(String appId) {
-        this._appId = appId;
-        this._initedSign = false;
-        return (C) this;
-    }
+        public B port(int port) {
+            this.port = port;
+            return (B) this;
+        }
 
-    public C setAppKey(String appKey) {
-        this._appKey = appKey;
-        this._initedSign = false;
-        return (C) this;
-    }
+        public B apiHost(String apiHost) {
+            this.apiHost = apiHost;
+            return (B) this;
+        }
 
-    public C setMasterKey(String masterKey) {
-        this._masterKey = masterKey;
-        this._initedSign = false;
-        return (C) this;
+        public B apiVersion(String apiVersion) {
+            this.apiVersion = apiVersion;
+            return (B) this;
+        }
     }
 }

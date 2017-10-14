@@ -6,5 +6,6 @@ target/
 .project
 nb-configuration.xml
 nbactions.xml
+tests.props.local
 !.travis.yml
 !.gitignore

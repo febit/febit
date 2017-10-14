@@ -32,6 +32,7 @@
     <module>febit-leancloud</module>
     <module>febit-web</module>
     <module>febit-bearychat</module>
+    <module>easy-okhttp</module>
   </modules>
   <repositories>
     <repository>
@@ -276,6 +277,11 @@
       <dependency>
         <groupId>${project.groupId}</groupId>
         <artifactId>febit-common</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>easy-okhttp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

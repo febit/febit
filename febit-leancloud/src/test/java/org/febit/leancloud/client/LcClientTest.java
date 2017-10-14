@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  *
  * @author zqq90
  */
-//@Test(groups = {"ignore"})
+@Test(groups = {"ignore"})
 public class LcClientTest {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(LcClientTest.class);
@@ -39,14 +39,14 @@ public class LcClientTest {
 
     @Petite.Init
     public void init() {
-        _client = new LcApiClient()
-                .keepAlive()
-                .setAppId(appId)
-                .setMasterKey(masterKey)
-                .setAppKey(appKey);
+        _client = LcApiClient.builder()
+                .appId(appId)
+                .masterKey(masterKey)
+                .appKey(appKey)
+                .build();
     }
 
-    //@Test
+    @Test
     public void testQuery() {
         LcQueryResponse<Todo> response;
 
@@ -63,7 +63,7 @@ public class LcClientTest {
         assertTrue(response.isOk());
     }
 
-    //@Test
+    @Test
     public void testWatch() {
 
         Stopwatch stopwatch = Stopwatch.startNew();
@@ -75,7 +75,7 @@ public class LcClientTest {
 
     }
 
-    //@Test
+    @Test
     public void test() {
         if (appId == null) {
             return;
