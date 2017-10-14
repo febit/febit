@@ -16,8 +16,8 @@
 package org.febit.bearychat;
 
 import org.febit.bearychat.meta.Outgoing;
-import org.febit.bearychat.shaded.jodd.macro.BasePathMacros;
-import org.febit.bearychat.shaded.jodd.macro.RegExpPathMacros;
+import org.febit.shaded.jodd.macro.BasePathMacros;
+import org.febit.shaded.jodd.macro.RegExpPathMacros;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
