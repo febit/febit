@@ -17,8 +17,10 @@ package org.febit.easyokhttp;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Base64;
 import okhttp3.CacheControl;
 import okhttp3.Call;
+import okhttp3.Credentials;
 import okhttp3.EasyOkhttpHackUtil;
 import okhttp3.FormBody;
 import okhttp3.Headers;
@@ -30,6 +32,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpMethod;
+import okio.ByteString;
 
 /**
  *
@@ -41,9 +44,9 @@ public class EasyRequest {
   public static final MediaType MEDIA_TYPE_TEXT = MediaType.parse("text/plain; charset=utf-8");
 
   protected final HttpUrl.Builder urlBuilder = new HttpUrl.Builder();
+  protected final Headers.Builder headers = new Headers.Builder();
   protected HttpUrl url;
   protected String method;
-  protected Headers.Builder headers;
   protected RequestBody body;
   protected FormBody.Builder form;
   protected Object tag;
@@ -54,6 +57,14 @@ public class EasyRequest {
 
   public Response send(OkHttpClient client) throws IOException {
     return newCall(client).execute();
+  }
+
+  public Response sendSilent(OkHttpClient client) {
+    try {
+      return send(client);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   public Call newCall(OkHttpClient client) {
@@ -248,7 +259,13 @@ public class EasyRequest {
   }
 
   public EasyRequest headers(Headers headers) {
-    this.headers = headers.newBuilder();
+    EasyOkhttpHackUtil.addAllToBuilder(headers, this.headers);
+    return this;
+  }
+
+  public EasyRequest basicAuthentication(String username, String password) {
+    String encoded = ByteString.encodeUtf8(username + ':' + password).base64();
+    header("Authorization", "Basic " + encoded);
     return this;
   }
 

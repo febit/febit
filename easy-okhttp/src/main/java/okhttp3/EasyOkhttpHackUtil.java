@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.util.Collections;
 import static okhttp3.HttpUrl.defaultPort;
 
 /**
@@ -36,6 +37,10 @@ public class EasyOkhttpHackUtil {
     urlBuilder.encodedPathSegments.addAll(url.encodedPathSegments());
     urlBuilder.encodedQuery(url.encodedQuery());
     urlBuilder.encodedFragment = url.encodedFragment();
+  }
+
+  public static void addAllToBuilder(Headers headers, Headers.Builder builder) {
+    builder.namesAndValues.addAll(headers.newBuilder().namesAndValues);
   }
 
   public static Request.Builder createRequestBuilder(
