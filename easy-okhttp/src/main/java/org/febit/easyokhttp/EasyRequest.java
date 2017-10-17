@@ -17,10 +17,8 @@ package org.febit.easyokhttp;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Base64;
 import okhttp3.CacheControl;
 import okhttp3.Call;
-import okhttp3.Credentials;
 import okhttp3.EasyOkhttpHackUtil;
 import okhttp3.FormBody;
 import okhttp3.Headers;
@@ -121,16 +119,20 @@ public class EasyRequest {
   }
 
   public EasyRequest jsonBody(Object json) {
+    // FIXME jsonBody(Object)
     throw new UnsupportedOperationException();
   }
 
   public EasyRequest form(String name, Number value) {
-    return form(name, String.valueOf(value));
+    return form(name, (value == null) ? null : value.toString());
   }
 
   public EasyRequest form(String name, String value) {
     if (form == null) {
       form = new FormBody.Builder();
+    }
+    if (value == null) {
+      return this;
     }
     form.add(name, value);
     return this;
@@ -143,11 +145,16 @@ public class EasyRequest {
   }
 
   public EasyRequest query(String name, Number value) {
+    if (value == null) {
+      return this;
+    }
     return query(name, String.valueOf(value));
   }
 
   public EasyRequest query(String name, String value) {
-    urlBuilder.addQueryParameter(name, value);
+    if (value != null) {
+      urlBuilder.addQueryParameter(name, value);
+    }
     return this;
   }
 
@@ -244,11 +251,18 @@ public class EasyRequest {
 
   // ==> headers
   public EasyRequest header(String name, String value) {
-    headers.set(name, value);
+    if (value == null) {
+      headers.removeAll(name);
+    } else {
+      headers.set(name, value);
+    }
     return this;
   }
 
   public EasyRequest addHeader(String name, String value) {
+    if (value == null) {
+      value = "";
+    }
     headers.add(name, value);
     return this;
   }
