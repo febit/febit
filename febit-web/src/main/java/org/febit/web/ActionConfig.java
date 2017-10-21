@@ -18,7 +18,7 @@ package org.febit.web;
 import java.lang.reflect.Method;
 import org.febit.web.argument.ArgumentConfig;
 import org.febit.web.component.Wrapper;
-import org.febit.web.meta.IgnoreXsrf;
+import org.febit.web.util.AnnotationUtil;
 
 /**
  *
@@ -28,22 +28,41 @@ public class ActionConfig {
 
     public final int id;
     public final Object action;
-    public final Method method;
+    public final Method handler;
     public final String path;
-    public final boolean isHtml;
+    public final String httpMethod;
     public final boolean isIgnoreXsrf;
     public final ArgumentConfig[] arguments;
     public final Wrapper[] wrappers;
 
-    public ActionConfig(int id, Object action, Method method, String path, ArgumentConfig[] arguments, Wrapper[] wrappers) {
+    public ActionConfig(
+            int id,
+            Object action,
+            Method method,
+            String path,
+            String httpMethod,
+            ArgumentConfig[] arguments,
+            Wrapper[] wrappers) {
+        this(id, action, method, path, httpMethod, arguments, wrappers,
+                AnnotationUtil.hasIgnoreXsrfAnno(method));
+    }
+
+    public ActionConfig(
+            int id, Object action,
+            Method method,
+            String path,
+            String httpMethod,
+            ArgumentConfig[] arguments,
+            Wrapper[] wrappers,
+            boolean isIgnoreXsrf) {
         this.id = id;
         this.action = action;
-        this.method = method;
+        this.handler = method;
         this.path = path;
+        this.httpMethod = httpMethod.toUpperCase();
+        this.isIgnoreXsrf = isIgnoreXsrf;
         this.arguments = arguments;
         this.wrappers = wrappers;
-        this.isHtml = path.endsWith(".html") || path.endsWith("htm");
-        this.isIgnoreXsrf = this.isHtml || method.getAnnotation(IgnoreXsrf.class) != null;
     }
 
     @Override
@@ -62,6 +81,6 @@ public class ActionConfig {
         final ActionConfig other = (ActionConfig) obj;
         return this.id == other.id
                 && this.action == other.action
-                && this.method == other.method;
+                && this.handler == other.handler;
     }
 }

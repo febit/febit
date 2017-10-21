@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.web.render;
+package org.febit.web.meta;
 
-import org.febit.web.ActionRequest;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
- *
- * @author zqq90
- */
-public class NotSupportedRender implements Render {
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE})
+public @interface ActionAnnotation {
 
-    @Override
-    public Object render(ActionRequest actionRequest, Object result) throws Exception {
-        throw new Exception("Not supported yet: " + (result != null ? result.getClass() : "null") + ", Action:" + actionRequest.actionConfig.handler);
-    }
 }

@@ -32,7 +32,7 @@ public class InternalForwardRender implements Render<InternalForward> {
         String realPath = result.isRelative()
                 ? FileNameUtil.concat(actionRequest.actionConfig.path, result.getPath(), true)
                 : result.getPath();
-        ActionRequest forwardRequest = actionManager.buildActionRequest(realPath, actionRequest.request, actionRequest.response);
+        ActionRequest forwardRequest = actionManager.buildActionRequest(actionRequest.request.getMethod(), realPath, actionRequest.request, actionRequest.response);
         if (forwardRequest == null) {
             return ResponeError.ERROR_404;
         }

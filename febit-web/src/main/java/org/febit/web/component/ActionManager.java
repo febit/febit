@@ -32,11 +32,11 @@ import jodd.bean.BeanTemplateParser;
 import jodd.io.FileNameUtil;
 import jodd.io.findfile.ClassFinder;
 import jodd.io.findfile.ClassScanner;
+import jodd.util.StringTemplateParser;
 import org.febit.lang.IdentitySet;
+import org.febit.lang.Tuple2;
 import org.febit.service.Services;
-import org.febit.util.ArraysUtil;
 import org.febit.util.ClassUtil;
-import org.febit.util.CollectionUtil;
 import org.febit.util.Petite;
 import org.febit.util.StringUtil;
 import org.febit.web.ActionConfig;
@@ -45,7 +45,6 @@ import org.febit.web.Filters;
 import org.febit.web.argument.Argument;
 import org.febit.web.argument.ArgumentConfig;
 import org.febit.web.meta.Action;
-import org.febit.web.meta.Filter;
 import org.febit.web.meta.In;
 import org.febit.web.upload.MultipartRequestWrapper;
 import org.febit.web.upload.UploadFileFactory;
@@ -54,6 +53,7 @@ import org.febit.web.util.Wildcard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.febit.web.OuterFilter;
+import org.febit.web.util.AnnotationUtil;
 
 /**
  *
@@ -62,35 +62,34 @@ import org.febit.web.OuterFilter;
 public class ActionManager implements Component {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ActionManager.class);
-    protected static final BeanTemplateParser PATH_TEMPLATE_PARSER = new BeanTemplateParser();
+    protected static final StringTemplateParser PATH_TEMPLATE_PARSER = new StringTemplateParser();
     protected static final ArgumentConfig[] EMPTY_ARGS = new ArgumentConfig[0];
+    protected static final List<String> DEFAULT_HTTP_METHODS = Collections.unmodifiableList(Arrays.asList("GET", "POST"));
 
     protected final Map<String, ActionConfig> actionConfigMap = new HashMap<>();
     protected final Map<String, List<String>> actionMatchMap = new HashMap<>();
     protected final Map<String, String[]> pathTokens = new HashMap<>();
 
-    protected final IdentitySet<Class> discardCache = new IdentitySet<>(16);
+    protected final AtomicInteger _nextId = new AtomicInteger(0);
+    protected final IdentitySet<Class> _discardCaching = new IdentitySet<>(16);
 
     protected UploadFileFactory uploadFileFactory;
     protected Wrapper renderWrapper;
     protected Wrapper actionInvoker;
     protected String[] defaultFilters;
     protected String[] scan;
-
     protected Class[] discards;
 
     protected Petite petite;
     protected ArgumentManager argumentManager;
 
-    protected AtomicInteger _nextId = new AtomicInteger(0);
-    protected String[] _basePkgs;
-    protected String[] _basePkgPaths;
+    protected List<Tuple2<String, String>> _basePkgs;
     protected Wrapper[] _defaultWrappers;
 
     @Petite.Init
     public void init() {
         if (discards != null) {
-            this.discardCache.addAll(discards);
+            this._discardCaching.addAll(discards);
         }
         initBasePaths();
         initDefaultWrappers();
@@ -104,8 +103,8 @@ public class ActionManager implements Component {
         return actionConfigMap.size();
     }
 
-    public int getActionId(String path) {
-        ActionConfig config = this.actionConfigMap.get(path);
+    public int getActionId(String key) {
+        ActionConfig config = this.actionConfigMap.get(key);
         return config != null ? config.id : -1;
     }
 
@@ -118,42 +117,41 @@ public class ActionManager implements Component {
     }
 
     protected void initBasePaths() {
-        final Map<String, String> map = CollectionUtil.createMap(this.scan.length);
+        List<Tuple2<String, String>> list = new ArrayList<>();
         for (String raw : this.scan) {
             int index = raw.indexOf(' ');
             if (index < 0) {
-                map.put(raw, "/");
+                list.add(Tuple2.create(raw, "/"));
             } else {
-                map.put(raw.substring(index).trim() + '.', raw.substring(0, index));
+                list.add(Tuple2.create(
+                        raw.substring(index).trim() + '.',
+                        raw.substring(0, index)
+                ));
             }
         }
-        final int size = map.size();
-        final String[] pkgs = map.keySet().toArray(new String[size]);
-        Arrays.sort(pkgs);
-        ArraysUtil.invert(pkgs);
-        this._basePkgs = pkgs;
-        final String[] paths = new String[size];
-        for (int i = 0; i < size; i++) {
-            paths[i] = map.get(pkgs[i]);
-        }
-        this._basePkgPaths = paths;
+        Collections.sort(list, (o1, o2) -> {
+            // _1 DESC 
+            return o2._1.compareTo(o1._1);
+        });
+        this._basePkgs = Collections.unmodifiableList(list);
     }
 
     public ActionRequest buildActionRequest(HttpServletRequest request, HttpServletResponse response) {
         String path = ServletUtil.getRequestPath(request);
-        return buildActionRequest(path, request, response);
+        return buildActionRequest(request.getMethod(), path, request, response);
     }
 
     /**
      * Build ActionRequest for a http request.
      *
+     * @param method
      * @param path
      * @param request
      * @param response
      * @return if not found will returns null.
      */
-    public ActionRequest buildActionRequest(String path, HttpServletRequest request, HttpServletResponse response) {
-        final ActionConfig actionConfig = actionConfigMap.get(path);
+    public ActionRequest buildActionRequest(String method, String path, HttpServletRequest request, HttpServletResponse response) {
+        final ActionConfig actionConfig = actionConfigMap.get(buildPathKey(method, path));
         if (actionConfig == null) {
             return null;
         }
@@ -179,24 +177,18 @@ public class ActionManager implements Component {
                     return;
                 }
                 Class actionClass = ClassUtil.getClass(className);
-                if (ClassUtil.isAbstract(actionClass)) {
-                    return;
-                }
-                if (discardCache.contains(actionClass)) {
-                    return;
-                }
-                Annotation actionAnno = actionClass.getAnnotation(Action.class);
-                if (actionAnno == null) {
+                if (ClassUtil.isAbstract(actionClass)
+                        || _discardCaching.contains(actionClass)
+                        || !AnnotationUtil.isAction(actionClass)) {
                     return;
                 }
                 LOG.debug("Find action: {}", actionClass);
                 actionClasses.add(actionClass);
             }
         };
-        String[] basePkgs = this._basePkgs;
-        String[] includes = new String[basePkgs.length];
-        for (int i = 0; i < basePkgs.length; i++) {
-            includes[i] = basePkgs[i] + '*';
+        String[] includes = new String[_basePkgs.size()];
+        for (int i = 0; i < _basePkgs.size(); i++) {
+            includes[i] = _basePkgs.get(i)._1 + '*';
         }
         scanner.setExcludeAllEntries(true);
         scanner.setIncludeResources(false);
@@ -204,12 +196,10 @@ public class ActionManager implements Component {
         scanner.scanDefaultClasspath();
 
         // register actions
-        for (Class actionClass : actionClasses) {
-            register(actionClass);
-        }
+        actionClasses.forEach(this::register);
     }
 
-    public void register(Class type) {
+    public void register(Class<?> type) {
         register(createActionInstance(type), false);
     }
 
@@ -220,25 +210,24 @@ public class ActionManager implements Component {
     public void register(Object action, boolean replace) {
         final Class type = action.getClass();
         for (Method method : type.getMethods()) {
-            Action actionAnno = method.getAnnotation(Action.class);
-            if (actionAnno == null) {
+            if (!AnnotationUtil.isAction(method)) {
                 continue;
             }
             register(createActionConfig(action, method), replace);
         }
     }
 
-    protected void registerToMatchMap(String path) {
+    protected void registerToMatchMap(String key) {
         int index = 0;
         for (;;) {
-            index = path.indexOf('/', index + 1);
+            index = key.indexOf('/', index + 1);
             if (index <= 0) {
                 break;
             }
-            putToMatchMap(path.substring(0, index) + '*', path);
+            putToMatchMap(key.substring(0, index) + '*', key);
         }
-        putToMatchMap("*", path);
-        putToMatchMap(path, path);
+        putToMatchMap("*", key);
+        putToMatchMap(key, key);
     }
 
     protected void putToMatchMap(String key, String fullPath) {
@@ -254,42 +243,53 @@ public class ActionManager implements Component {
         register(actionConfig, false);
     }
 
-    /**
-     * 非线程安全
-     *
-     * @param actionConfig
-     * @param replace
-     */
-    protected void register(ActionConfig actionConfig, boolean replace) {
-        ActionConfig old = actionConfigMap.put(actionConfig.path, actionConfig);
-        if (old != null && !replace) {
-            throw new RuntimeException("Duplicate action path '" + actionConfig.method + "' vs.'" + old.method + "'");
+    protected void register(ActionConfig[] actionConfigs, boolean replace) {
+        for (ActionConfig actionConfig : actionConfigs) {
+            register(actionConfig, replace);
         }
-        final String path = actionConfig.path;
-        registerToMatchMap(path);
-        pathTokens.put(path, Wildcard.splitcPathPattern(path));
+    }
+
+    protected void register(ActionConfig actionConfig, boolean replace) {
+        final String key = buildPathKey(actionConfig.httpMethod, actionConfig.path);
+        ActionConfig old = actionConfigMap.put(key, actionConfig);
+        if (old != null && !replace) {
+            throw new RuntimeException("Duplicate action path '" + actionConfig.handler + "' vs.'" + old.handler + "'");
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Action: {}#{} -> {}: {}",
+                    actionConfig.action.getClass(), actionConfig.handler.getName(), actionConfig.httpMethod, actionConfig.path);
+        }
+        registerToMatchMap(key);
+        pathTokens.put(key, Wildcard.splitcPathPattern(key));
     }
 
     public List<String> getMatchPaths(String key) {
-        if (key.charAt(0) == '@') {
-            String[] pattern = Wildcard.splitcPathPattern(key.substring(1));
-            List<String> result = new ArrayList<>();
-            for (Map.Entry<String, String[]> entrySet : this.pathTokens.entrySet()) {
-                if (Wildcard.matchPathTokens(entrySet.getValue(), pattern)) {
-                    result.add(entrySet.getKey());
-                }
-            }
-            return result;
-        } else {
+        if (key.charAt(0) != '@') {
             return this.actionMatchMap.get(key);
         }
+        String[] pattern = Wildcard.splitcPathPattern(key.substring(1));
+        List<String> result = new ArrayList<>();
+        for (Map.Entry<String, String[]> entrySet : this.pathTokens.entrySet()) {
+            if (Wildcard.matchPathTokens(entrySet.getValue(), pattern)) {
+                result.add(entrySet.getKey());
+            }
+        }
+        return result;
     }
 
-    protected ActionConfig createActionConfig(final Object action, final Method method) {
+    protected ActionConfig[] createActionConfig(final Object action, final Method method) {
         String path = resolvePath(action, method);
         Wrapper[] wrappers = resolveWrappers(action, method);
         ArgumentConfig[] arguments = resolveArgumentConfigs(action, method);
-        return new ActionConfig(_nextId.incrementAndGet(), action, method, path, arguments, wrappers);
+        List<String> httpMethods = AnnotationUtil.getHttpMethods(method);
+        if (httpMethods.isEmpty()) {
+            httpMethods = DEFAULT_HTTP_METHODS;
+        }
+        ActionConfig[] configs = new ActionConfig[httpMethods.size()];
+        for (int i = 0; i < httpMethods.size(); i++) {
+            configs[i] = new ActionConfig(_nextId.incrementAndGet(), action, method, path, httpMethods.get(i), arguments, wrappers);
+        }
+        return configs;
     }
 
     protected ArgumentConfig[] resolveArgumentConfigs(final Object action, final Method method) {
@@ -366,74 +366,110 @@ public class ActionManager implements Component {
     }
 
     protected Wrapper[] resolveWrappers(final Object action, final Method method) {
-        Filter filterBy = method.getAnnotation(Filter.class);
-        if (filterBy == null) {
+        List<String> filters = AnnotationUtil.getFilters(method);
+        if (filters == null) {
             return this._defaultWrappers;
         }
         final List<Wrapper> wrappers = new ArrayList<>();
         wrappers.add(renderWrapper);
-
-        for (String name : filterBy.value()) {
-            resolveWrappers(wrappers, name);
-        }
-
+        filters.forEach((filter) -> {
+            resolveWrappers(wrappers, filter);
+        });
         wrappers.add(actionInvoker);
         return sort(wrappers.toArray(new Wrapper[wrappers.size()]));
     }
 
+    protected String resolvePackageActionPath(Class actionType) {
+        String pkg = actionType.getPackage().getName() + '.';
+        for (Tuple2<String, String> basePkg : this._basePkgs) {
+            if (pkg.startsWith(basePkg._1)) {
+                return FileNameUtil.concat(basePkg._2, StringUtil.replaceChar(pkg.substring(basePkg._1.length()), '.', '/'), true);
+            }
+        }
+        return "/";
+    }
+
+    protected String resolveClassActionPath(Class<?> actionType) {
+        String actionClassPath = actionType.getSimpleName();
+        actionClassPath = StringUtil.cutSuffix(actionClassPath, "Action");
+        actionClassPath = StringUtil.lowerFirst(actionClassPath);
+        return actionClassPath;
+    }
+
+    protected String buildPathKey(String method, String path) {
+        return method.toUpperCase() + ':' + path;
+    }
+
     protected String resolvePath(final Object action, final Method method) {
 
-        final Class<?> type = action.getClass();
+        final Class<?> actionClass = action.getClass();
 
         //method path
-        Action methodAnno = method.getAnnotation(Action.class);
-        String path = methodAnno.value();
-        if (path == null || path.isEmpty()) {
-            path = method.getName();
-            if (path.equals("execute")) {
-                path = null;
-            }
+        String path = AnnotationUtil.getActionAnnoValue(method);
+        path = resolveInternalPathMacro(path, "#METHOD");
+
+        if (path != null && path.isEmpty()) {
+            path = null;
         }
 
         if (path == null || path.charAt(0) != '/') {
             //append class path
-            Action actionAnno = type.getAnnotation(Action.class);
-            String actionClassPath = actionAnno.value();
-            if (actionClassPath == null || actionClassPath.isEmpty()) {
-                actionClassPath = StringUtil.lowerFirst(StringUtil.cutSuffix(type.getSimpleName(), "Action"));
+            Action actionAnno = actionClass.getAnnotation(Action.class);
+            String classActionPath = actionAnno != null ? actionAnno.value() : null;
+            if (classActionPath == null
+                    || classActionPath.isEmpty()) {
+                classActionPath = resolveClassActionPath(actionClass);
             }
+            classActionPath = resolveInternalPathMacro(classActionPath, "#CLASS");
             if (path == null) {
-                path = actionClassPath;
+                path = classActionPath;
             } else {
-                path = FileNameUtil.concat(actionClassPath, path, true);
+                path = FileNameUtil.concat(classActionPath, path, true);
             }
         }
 
         if (path.charAt(0) != '/') {
             // append packagePath
-            String pkg = type.getPackage().getName() + '.';
-            for (int i = 0; i < _basePkgs.length; i++) {
-                String basePkg = _basePkgs[i];
-                if (pkg.startsWith(basePkg)) {
-                    String pkgPath = FileNameUtil.concat(_basePkgPaths[i], StringUtil.replaceChar(pkg.substring(basePkg.length()), '.', '/'), true);
-                    path = FileNameUtil.concat(pkgPath, path, true);
-                    break;
-                }
-            }
+            String packageActionPath = resolvePackageActionPath(actionClass);
+            packageActionPath = resolveInternalPathMacro(packageActionPath, "#PACKAGE");
+            path = FileNameUtil.concat(packageActionPath, path, true);
         }
 
         if (path.charAt(0) != '/') {
             //fix path
             path = '/' + path;
         }
-        if (path.indexOf("${") > 0) {
-            path = PATH_TEMPLATE_PARSER.parse(path, action);
-        }
-        LOG.debug("Action: {}#{} -> {}", type, method.getName(), path);
+
+        path = PATH_TEMPLATE_PARSER.parse(path, createActionPathMacroResolver(action, method));
         return path;
     }
 
-    protected Object createActionInstance(Class type) {
+    protected String resolveInternalPathMacro(final String src, String current) {
+        if (src == null) {
+            return null;
+        }
+        return PATH_TEMPLATE_PARSER.parse(src, (String macroName) -> "${"
+                + (macroName.equals("#") ? current : macroName)
+                + "}");
+    }
+
+    protected StringTemplateParser.MacroResolver createActionPathMacroResolver(Object action, Method method) {
+        StringTemplateParser.MacroResolver actionMacroResolver = BeanTemplateParser.createBeanMacroResolver(action);
+        return (String macroName) -> {
+            switch (macroName) {
+                case "#METHOD":
+                    return method.getName();
+                case "#CLASS":
+                    return resolveClassActionPath(action.getClass());
+                case "#PACKAGE":
+                    return resolvePackageActionPath(action.getClass());
+                default:
+                    return actionMacroResolver.resolve(macroName);
+            }
+        };
+    }
+
+    protected Object createActionInstance(Class<?> type) {
         LOG.debug("Creating action {} ...", type);
         final Object action = ClassUtil.newInstance(type);
         Services.inject(action);

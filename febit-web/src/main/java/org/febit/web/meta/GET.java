@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.web.render;
+package org.febit.web.meta;
 
-import org.febit.web.ActionRequest;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
+ * HTTP Method: GET.
  *
  * @author zqq90
  */
-public class NotSupportedRender implements Render {
+@HttpMethod("GET")
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+public @interface GET {
 
-    @Override
-    public Object render(ActionRequest actionRequest, Object result) throws Exception {
-        throw new Exception("Not supported yet: " + (result != null ? result.getClass() : "null") + ", Action:" + actionRequest.actionConfig.handler);
-    }
 }

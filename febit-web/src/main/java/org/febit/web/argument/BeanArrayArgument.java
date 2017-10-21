@@ -32,7 +32,7 @@ public class BeanArrayArgument implements Argument {
     @Override
     public Object resolve(ActionRequest request, Class type, String name, int index) {
         if (name == null) {
-            return new RuntimeException("Can't resolve array type arg whitout name: " + request.actionConfig.method);
+            return new RuntimeException("Can't resolve array type arg whitout name: " + request.actionConfig.handler);
         }
         final Class componentType = type.getComponentType();
 

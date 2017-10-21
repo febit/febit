@@ -23,10 +23,8 @@ import java.lang.annotation.Target;
 
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
 public @interface Action {
 
-    String value() default "";
-
-    String suffix() default "";
+    String value() default "${#}";
 }

@@ -30,7 +30,7 @@ public class DefaultActionInvoker implements Wrapper {
     public Object invoke(final ActionRequest request) throws Exception {
         final ActionConfig actionConfig = request.actionConfig;
         final Object[] args = resolveArguments(request);
-        return actionConfig.method.invoke(actionConfig.action, args);
+        return actionConfig.handler.invoke(actionConfig.action, args);
     }
 
     protected Object[] resolveArguments(final ActionRequest request) {
