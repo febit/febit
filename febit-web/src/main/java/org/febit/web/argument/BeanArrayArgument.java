@@ -19,6 +19,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import jodd.bean.BeanUtil;
+import org.febit.lang.Iter;
 import org.febit.util.ClassUtil;
 import org.febit.web.ActionRequest;
 
@@ -29,31 +30,32 @@ import org.febit.web.ActionRequest;
 public class BeanArrayArgument implements Argument {
 
     @Override
-    public Object resolve(ActionRequest request, Class type, String name, int index) {
+    public Object resolve(ActionRequest actionRequest, Class type, String name, int index) {
         if (name == null) {
-            return new RuntimeException("Can't resolve array type arg whitout name: " + request.actionConfig.handler);
+            return new RuntimeException("Can't resolve array type arg whitout name: " + actionRequest.actionConfig.handler);
         }
         final Class componentType = type.getComponentType();
 
         int dotIndex = name.length();
         int prefixLen = dotIndex + 1;
-        final ArrayList beans = new ArrayList();
+        final ArrayList<Object> beans = new ArrayList<>();
         int len = 0;
-        final Enumeration<String> enumeration = request.getParameterNames();
-        while (enumeration.hasMoreElements()) {
-            String param = enumeration.nextElement();
-            if (param.length() > dotIndex
-                    && param.charAt(dotIndex) == '.'
-                    && param.startsWith(name)) {
-                String[] raw = request.getParameterValues(param);
-                while (len < raw.length) {
-                    beans.add(ClassUtil.newInstance(type));
-                    len++;
-                }
-                String key = param.substring(prefixLen);
-                for (int i = 0; i < len; i++) {
-                    BeanUtil.declaredForcedSilent.setProperty(beans.get(i), key, raw[i]);
-                }
+
+        Iter<String> iter = actionRequest.getParameterNames()
+                .filter((param) -> param.length() > dotIndex
+                && param.charAt(dotIndex) == '.'
+                && param.startsWith(name));
+
+        while (iter.hasNext()) {
+            String param = iter.next();
+            String[] raw = actionRequest.getParameterValues(param);
+            while (len < raw.length) {
+                beans.add(ClassUtil.newInstance(type));
+                len++;
+            }
+            String key = param.substring(prefixLen);
+            for (int i = 0; i < len; i++) {
+                BeanUtil.declaredForcedSilent.setProperty(beans.get(i), key, raw[i]);
             }
         }
 

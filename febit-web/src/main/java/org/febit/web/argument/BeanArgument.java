@@ -16,7 +16,9 @@
 package org.febit.web.argument;
 
 import java.util.Enumeration;
+import java.util.Iterator;
 import jodd.bean.BeanUtil;
+import org.febit.lang.Iter;
 import org.febit.util.ClassUtil;
 import org.febit.web.ActionRequest;
 
@@ -29,23 +31,21 @@ public class BeanArgument implements Argument {
     @Override
     public Object resolve(ActionRequest actionRequest, Class type, String name, int index) {
         final Object bean = ClassUtil.newInstance(type);
-        if (name == null) {
-            Enumeration<String> enumeration = actionRequest.getParameterNames();
-            while (enumeration.hasMoreElements()) {
-                String param = enumeration.nextElement();
-                BeanUtil.declaredForcedSilent.setProperty(bean, param, actionRequest.getParameter(param));
-            }
-        } else {
+        Iter<String> iter = actionRequest.getParameterNames();
+        if (name != null) {
             int dotIndex = name.length();
             int prefixLen = dotIndex + 1;
-            Enumeration<String> enumeration = actionRequest.getParameterNames();
-            while (enumeration.hasMoreElements()) {
-                String param = enumeration.nextElement();
-                if (param.length() > dotIndex
-                        && param.charAt(dotIndex) == '.'
-                        && param.startsWith(name)) {
-                    BeanUtil.declaredForcedSilent.setProperty(bean, param.substring(prefixLen), actionRequest.getParameter(param));
-                }
+            iter = iter.filter((param) -> param.length() > dotIndex
+                    && param.charAt(dotIndex) == '.'
+                    && param.startsWith(name));
+            while (iter.hasNext()) {
+                String param = iter.next();
+                BeanUtil.declaredForcedSilent.setProperty(bean, param.substring(prefixLen), actionRequest.getParameter(param));
+            }
+        } else {
+            while (iter.hasNext()) {
+                String param = iter.next();
+                BeanUtil.declaredForcedSilent.setProperty(bean, param, actionRequest.getParameter(param));
             }
         }
         return bean;

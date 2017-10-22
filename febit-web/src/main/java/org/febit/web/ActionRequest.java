@@ -15,9 +15,15 @@
  */
 package org.febit.web;
 
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.febit.lang.Iter;
+import org.febit.util.ArraysUtil;
+import org.febit.util.CollectionUtil;
 import org.febit.web.component.Wrapper;
 
 /**
@@ -32,11 +38,16 @@ public class ActionRequest {
 
     protected final Wrapper[] wrappers;
     protected int currentIndex = 0;
+    protected final Map<String, String> macroParams;
 
-    public ActionRequest(ActionConfig actionConfig, HttpServletRequest request, HttpServletResponse response) {
+    public ActionRequest(ActionConfig actionConfig,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Map<String, String> macroParams) {
         this.actionConfig = actionConfig;
         this.request = request;
         this.response = response;
+        this.macroParams = macroParams != null ? macroParams : Collections.emptyMap();
         this.wrappers = actionConfig.wrappers;
     }
 
@@ -50,15 +61,35 @@ public class ActionRequest {
     }
 
     public String getParameter(String name) {
+        String value = macroParams.get(name);
+        if (value != null) {
+            return value;
+        }
         return this.request.getParameter(name);
     }
 
-    public Enumeration<String> getParameterNames() {
-        return this.request.getParameterNames();
+    public Iter<String> getParameterNames() {
+        Enumeration<String> paramNames = this.request.getParameterNames();
+        if (macroParams.isEmpty()) {
+            return CollectionUtil.toIter(paramNames);
+        }
+        return CollectionUtil.concat(
+                macroParams.keySet().iterator(),
+                CollectionUtil.toIter(paramNames)
+                        .filter((name) -> !macroParams.containsKey(name))
+        );
     }
 
     public String[] getParameterValues(String name) {
-        return this.request.getParameterValues(name);
+        String macroValue = macroParams.get(name);
+        String[] params = this.request.getParameterValues(name);
+        if (macroValue == null) {
+            return params;
+        } else if (params == null) {
+            return new String[]{macroValue};
+        } else {
+            return ArraysUtil.append(params, macroValue);
+        }
     }
 
     public Object attr(String key) {

@@ -53,6 +53,7 @@ import org.febit.web.util.Wildcard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.febit.web.OuterFilter;
+import org.febit.web.util.ActionMacroPath;
 import org.febit.web.util.AnnotationUtil;
 
 /**
@@ -62,13 +63,14 @@ import org.febit.web.util.AnnotationUtil;
 public class ActionManager implements Component {
 
     protected static final Logger LOG = LoggerFactory.getLogger(ActionManager.class);
-    protected static final StringTemplateParser PATH_TEMPLATE_PARSER = new StringTemplateParser();
+    protected static final StringTemplateParser PATH_TEMPLATE_PARSER = new StringTemplateParser().setMacroPrefix("${");
     protected static final ArgumentConfig[] EMPTY_ARGS = new ArgumentConfig[0];
     protected static final List<String> DEFAULT_HTTP_METHODS = Collections.unmodifiableList(Arrays.asList("GET", "POST"));
 
     protected final Map<String, ActionConfig> actionConfigMap = new HashMap<>();
     protected final Map<String, List<String>> actionMatchMap = new HashMap<>();
     protected final Map<String, String[]> pathTokens = new HashMap<>();
+    protected final ActionMacroPath.Parser actionMacroPathParser = ActionMacroPath.newParser();
 
     protected final AtomicInteger _nextId = new AtomicInteger(0);
     protected final IdentitySet<Class> _discardCaching = new IdentitySet<>(16);
@@ -151,7 +153,9 @@ public class ActionManager implements Component {
      * @return if not found will returns null.
      */
     public ActionRequest buildActionRequest(String method, String path, HttpServletRequest request, HttpServletResponse response) {
-        final ActionConfig actionConfig = actionConfigMap.get(buildPathKey(method, path));
+        String key = buildPathKey(method, path);
+        ActionMacroPath macroPath = actionMacroPathParser.parse(key);
+        ActionConfig actionConfig = actionConfigMap.get(macroPath.key);
         if (actionConfig == null) {
             return null;
         }
@@ -163,7 +167,7 @@ public class ActionManager implements Component {
             } catch (IOException ignore) {
             }
         }
-        return new ActionRequest(actionConfig, request, response);
+        return new ActionRequest(actionConfig, request, response, macroPath.params);
     }
 
     public void scanActions() {
@@ -259,6 +263,7 @@ public class ActionManager implements Component {
             LOG.debug("Action: {}#{} -> {}: {}",
                     actionConfig.action.getClass(), actionConfig.handler.getName(), actionConfig.httpMethod, actionConfig.path);
         }
+        actionMacroPathParser.add(key);
         registerToMatchMap(key);
         pathTokens.put(key, Wildcard.splitcPathPattern(key));
     }
@@ -408,6 +413,9 @@ public class ActionManager implements Component {
 
         //method path
         String path = AnnotationUtil.getActionAnnoValue(method);
+        if (path == null) {
+            path = "${#}";
+        }
         path = resolveInternalPathMacro(path, "#METHOD");
 
         if (path != null && path.isEmpty()) {
