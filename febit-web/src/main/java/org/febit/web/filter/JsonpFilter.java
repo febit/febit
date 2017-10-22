@@ -31,7 +31,7 @@ public class JsonpFilter implements OuterFilter {
 
     @Override
     public Object invoke(ActionRequest actionRequest) throws Exception {
-        String callback = actionRequest.request.getParameter(callbackKey);
+        String callback = actionRequest.getParameter(callbackKey);
         if (callback == null) {
             callback = callbackDefault;
         }

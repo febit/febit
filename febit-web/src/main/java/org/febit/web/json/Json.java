@@ -15,7 +15,10 @@
  */
 package org.febit.web.json;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Map;
+import jodd.io.StreamUtil;
 import jodd.json.JsonParser;
 import jodd.json.JsonSerializer;
 import jodd.util.UnsafeUtil;
@@ -51,7 +54,20 @@ public class Json {
         return UnsafeUtil.createString(fastCharBuffer.toArray());
     }
 
+    protected static JsonParser newParser() {
+        return new JsonParser();
+    }
+
     public static <T> T parse(String raw, Class<T> type) {
-        return new JsonParser().parse(raw, type);
+        return newParser().parse(raw, type);
+    }
+
+    public static <T> T parse(char[] input, Class<T> type) throws IOException {
+        return newParser().parse(input, type);
+    }
+
+    public static <T> T parse(Reader reader, Class<T> type) throws IOException {
+        char[] input = StreamUtil.readChars(reader);
+        return parse(input, type);
     }
 }

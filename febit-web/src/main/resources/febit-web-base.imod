@@ -8,6 +8,7 @@
 [argumentManager :org.febit.web.component.ArgumentManager]
 [renderWrapper :org.febit.web.component.DefaultRenderWrapper]
 [uploadFileFactory :org.febit.web.upload.UploadFileFactory]
+[jsonBodyArgument :org.febit.web.argument.JsonBodyArgument]
 
 [utf8EncodingFilter :org.febit.web.filter.UTF8EncodingFilter]
 [errorHandlerFilter :org.febit.web.filter.ErrorHandlerFilter]
@@ -32,6 +33,8 @@ renders='''
   org.febit.web.render.ServiceResultRender
 '''
 
+[org.febit.web.component.JsonBodyArgumentResolver]
+argument=jsonBodyArgument
 
 [argumentManager]
 defaultArgument=org.febit.web.argument.BeanArgument

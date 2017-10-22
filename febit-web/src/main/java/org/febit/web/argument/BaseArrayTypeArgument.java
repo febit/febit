@@ -27,7 +27,7 @@ public class BaseArrayTypeArgument implements Argument {
 
     @Override
     public Object resolve(ActionRequest request, Class type, String name, int index) {
-        String raw = request.request.getParameter(name);
+        String raw = request.getParameter(name);
         if (raw == null) {
             return null;
         }

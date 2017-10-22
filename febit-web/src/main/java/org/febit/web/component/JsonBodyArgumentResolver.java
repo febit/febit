@@ -1,11 +1,11 @@
-/**
- * Copyright 2013-present febit.org (support@febit.org)
+/*
+ * Copyright 2017 febit.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.web.meta;
+package org.febit.web.component;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import org.febit.web.component.ArgumentManager;
+import org.febit.web.argument.Argument;
 
 /**
  *
  * @author zqq90
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
-@ArgumentAnnotation(resolver = ArgumentManager.class)
-public @interface In {
+public class JsonBodyArgumentResolver implements ArgumentResolver {
 
-    String value();
+    protected Argument argument;
+
+    @Override
+    public Argument resolveArgument(Class<?> type, String name, int index) {
+        return argument;
+    }
 }

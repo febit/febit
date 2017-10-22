@@ -1,11 +1,11 @@
-/**
- * Copyright 2013-present febit.org (support@febit.org)
+/*
+ * Copyright 2017 febit.org.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,28 +15,29 @@
  */
 package org.febit.web.argument;
 
-import org.febit.util.StringUtil;
+import java.io.IOException;
+import java.io.Reader;
 import org.febit.web.ActionRequest;
+import org.febit.web.json.Json;
 
 /**
  *
  * @author zqq90
  */
-public class StringArrayTypeArgument implements Argument {
+public class JsonBodyArgument implements Argument {
 
     @Override
     public Object resolve(ActionRequest request, Class type, String name, int index) {
-        String raw = request.getParameter(name);
-        if (raw == null) {
-            return null;
+        try {
+            Reader reader = request.request.getReader();
+            return Json.parse(reader, type);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
-        return StringUtil.toArrayOmitCommit(raw);
     }
 
     @Override
     public Class[] matchTypes() {
-        return new Class[]{
-            String[].class
-        };
+        return new Class[0];
     }
 }

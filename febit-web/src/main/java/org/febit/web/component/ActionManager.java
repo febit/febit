@@ -312,7 +312,9 @@ public class ActionManager implements Component {
             if (name != null && name.isEmpty()) {
                 name = null;
             }
-            Argument argument = argumentManager.resolveArgument(argType, name, i);
+            Class<? extends ArgumentResolver> argumentResolverClass = AnnotationUtil.getArgumentResolverClass(annotationses[i]);
+            Argument argument = (argumentResolverClass == null ? argumentManager : petite.get(argumentResolverClass))
+                    .resolveArgument(argType, name, i);
             arguments[i] = new ArgumentConfig(i, name, argType, argument);
         }
         return arguments;

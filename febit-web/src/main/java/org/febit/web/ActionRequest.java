@@ -15,6 +15,7 @@
  */
 package org.febit.web;
 
+import java.util.Enumeration;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.febit.web.component.Wrapper;
@@ -46,6 +47,18 @@ public class ActionRequest {
     public ActionRequest attr(String key, Object value) {
         this.request.setAttribute(key, value);
         return this;
+    }
+
+    public String getParameter(String name) {
+        return this.request.getParameter(name);
+    }
+
+    public Enumeration<String> getParameterNames() {
+        return this.request.getParameterNames();
+    }
+
+    public String[] getParameterValues(String name) {
+        return this.request.getParameterValues(name);
     }
 
     public Object attr(String key) {

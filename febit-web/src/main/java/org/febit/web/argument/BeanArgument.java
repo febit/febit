@@ -16,7 +16,6 @@
 package org.febit.web.argument;
 
 import java.util.Enumeration;
-import javax.servlet.http.HttpServletRequest;
 import jodd.bean.BeanUtil;
 import org.febit.util.ClassUtil;
 import org.febit.web.ActionRequest;
@@ -30,23 +29,22 @@ public class BeanArgument implements Argument {
     @Override
     public Object resolve(ActionRequest actionRequest, Class type, String name, int index) {
         final Object bean = ClassUtil.newInstance(type);
-        final HttpServletRequest request = actionRequest.request;
         if (name == null) {
-            Enumeration enumeration = request.getParameterNames();
+            Enumeration<String> enumeration = actionRequest.getParameterNames();
             while (enumeration.hasMoreElements()) {
-                String param = (String) enumeration.nextElement();
-                BeanUtil.declaredForcedSilent.setProperty(bean, param, request.getParameter(param));
+                String param = enumeration.nextElement();
+                BeanUtil.declaredForcedSilent.setProperty(bean, param, actionRequest.getParameter(param));
             }
         } else {
             int dotIndex = name.length();
             int prefixLen = dotIndex + 1;
-            Enumeration enumeration = request.getParameterNames();
+            Enumeration<String> enumeration = actionRequest.getParameterNames();
             while (enumeration.hasMoreElements()) {
-                String param = (String) enumeration.nextElement();
+                String param = enumeration.nextElement();
                 if (param.length() > dotIndex
                         && param.charAt(dotIndex) == '.'
                         && param.startsWith(name)) {
-                    BeanUtil.declaredForcedSilent.setProperty(bean, param.substring(prefixLen), request.getParameter(param));
+                    BeanUtil.declaredForcedSilent.setProperty(bean, param.substring(prefixLen), actionRequest.getParameter(param));
                 }
             }
         }

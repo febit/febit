@@ -13,30 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.web.argument;
+package org.febit.web.meta;
 
-import org.febit.util.StringUtil;
-import org.febit.web.ActionRequest;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import org.febit.web.component.ArgumentResolver;
 
-/**
- *
- * @author zqq90
- */
-public class StringArrayTypeArgument implements Argument {
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE})
+public @interface ArgumentAnnotation {
 
-    @Override
-    public Object resolve(ActionRequest request, Class type, String name, int index) {
-        String raw = request.getParameter(name);
-        if (raw == null) {
-            return null;
-        }
-        return StringUtil.toArrayOmitCommit(raw);
-    }
-
-    @Override
-    public Class[] matchTypes() {
-        return new Class[]{
-            String[].class
-        };
-    }
+    Class<? extends ArgumentResolver> resolver();
 }

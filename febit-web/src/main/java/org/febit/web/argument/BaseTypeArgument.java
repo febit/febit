@@ -26,7 +26,7 @@ public class BaseTypeArgument implements Argument {
 
     @Override
     public Object resolve(ActionRequest request, Class type, String name, int index) {
-        final String raw = request.request.getParameter(name);
+        final String raw = request.getParameter(name);
         if (type == String.class) {
             return raw;
         }

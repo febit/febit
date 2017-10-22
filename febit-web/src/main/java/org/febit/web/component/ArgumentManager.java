@@ -25,7 +25,7 @@ import org.febit.web.argument.Argument;
  *
  * @author zqq90
  */
-public class ArgumentManager implements Component {
+public class ArgumentManager implements ArgumentResolver, Component {
 
     protected final ConcurrentIdentityMap<Argument> argumentCache;
 
@@ -45,7 +45,8 @@ public class ArgumentManager implements Component {
         }
     }
 
-    public Argument resolveArgument(final Class type, final String name, final int index) {
+    @Override
+    public Argument resolveArgument(final Class<?> type, final String name, final int index) {
         Argument argument = argumentCache.get(type);
         if (argument != null) {
             return argument;

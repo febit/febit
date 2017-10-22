@@ -18,7 +18,6 @@ package org.febit.web.argument;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import javax.servlet.http.HttpServletRequest;
 import jodd.bean.BeanUtil;
 import org.febit.util.ClassUtil;
 import org.febit.web.ActionRequest;
@@ -38,16 +37,15 @@ public class BeanArrayArgument implements Argument {
 
         int dotIndex = name.length();
         int prefixLen = dotIndex + 1;
-        final HttpServletRequest req = request.request;
         final ArrayList beans = new ArrayList();
         int len = 0;
-        final Enumeration enumeration = req.getParameterNames();
+        final Enumeration<String> enumeration = request.getParameterNames();
         while (enumeration.hasMoreElements()) {
-            String param = (String) enumeration.nextElement();
+            String param = enumeration.nextElement();
             if (param.length() > dotIndex
                     && param.charAt(dotIndex) == '.'
                     && param.startsWith(name)) {
-                String[] raw = req.getParameterValues(param);
+                String[] raw = request.getParameterValues(param);
                 while (len < raw.length) {
                     beans.add(ClassUtil.newInstance(type));
                     len++;

@@ -15,7 +15,6 @@
  */
 package org.febit.web.filter;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.febit.web.ActionRequest;
 import org.febit.web.Filter;
@@ -31,11 +30,9 @@ public class FormTokenFilter implements Filter {
 
     @Override
     public Object invoke(ActionRequest actionRequest) throws Exception {
-
-        HttpServletRequest request = actionRequest.request;
-        String token = request.getParameter(tokenKey);
+        String token = actionRequest.getParameter(tokenKey);
         if (token != null) {
-            HttpSession session = request.getSession();
+            HttpSession session =  actionRequest.request.getSession();
             if (token.equals(session.getAttribute(tokenKey))) {
                 // if duplicate
                 return ResponeError.ERROR_204;

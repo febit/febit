@@ -21,9 +21,12 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.febit.web.component.ArgumentManager;
+import org.febit.web.component.ArgumentResolver;
 import org.febit.web.meta.Filter;
 import org.febit.web.meta.Action;
 import org.febit.web.meta.ActionAnnotation;
+import org.febit.web.meta.ArgumentAnnotation;
 import org.febit.web.meta.HttpMethod;
 import org.febit.web.meta.IgnoreXsrf;
 
@@ -107,6 +110,17 @@ public class AnnotationUtil {
             }
         }
         return httpMethods;
+    }
+
+    public static Class<? extends ArgumentResolver> getArgumentResolverClass(Annotation[] annotations) {
+        for (Annotation annotation : annotations) {
+            ArgumentAnnotation argAnno = annotation.annotationType().getAnnotation(ArgumentAnnotation.class);
+            if (argAnno != null) {
+                return argAnno.resolver();
+            }
+        }
+        // Not found
+        return null;
     }
 
     public static List<String> getFilters(Method method) {
