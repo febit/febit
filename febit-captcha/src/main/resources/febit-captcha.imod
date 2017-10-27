@@ -1,0 +1,10 @@
+
+[captcha: org.febit.captcha.Captcha]
+[captchaWebFilter :org.febit.captcha.web.CaptchaFilter]
+
+[captcha]
+textProducer=org.febit.captcha.impl.DefaultTextProducer
+wordRenderer=org.febit.captcha.impl.DefaultWordRender
+
+[org.febit.captcha.web.CaptchaRender]
+captcha=captcha

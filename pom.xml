@@ -33,6 +33,7 @@
     <module>febit-web</module>
     <module>febit-bearychat</module>
     <module>easy-okhttp</module>
+    <module>febit-captcha</module>
   </modules>
   <repositories>
     <repository>
