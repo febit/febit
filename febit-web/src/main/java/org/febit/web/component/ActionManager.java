@@ -88,6 +88,8 @@ public class ActionManager implements Component {
     protected List<Tuple2<String, String>> _basePkgs;
     protected Wrapper[] _defaultWrappers;
 
+    private transient Tuple2<Class, String> _pathPrefixCaching = null;
+
     @Petite.Init
     public void init() {
         if (discards != null) {
@@ -389,11 +391,17 @@ public class ActionManager implements Component {
     protected String resolvePackageActionPath(Class actionType) {
         String pkg = actionType.getPackage().getName() + '.';
         for (Tuple2<String, String> basePkg : this._basePkgs) {
-            if (pkg.startsWith(basePkg._1)) {
-                return FileNameUtil.concat(basePkg._2, StringUtil.replaceChar(pkg.substring(basePkg._1.length()), '.', '/'), true);
+            if (!pkg.startsWith(basePkg._1)) {
+                continue;
             }
+            String path = StringUtil.replaceChar(pkg.substring(basePkg._1.length()), '.', '/');
+            path = FileNameUtil.concat(basePkg._2, path, true);
+            if (path == null || path.isEmpty() || "/".equals(path)) {
+                return "";
+            }
+            return StringUtil.cutSurrounding(path, "/");
         }
-        return "/";
+        return "";
     }
 
     protected String resolveClassActionPath(Class<?> actionType) {
@@ -407,9 +415,34 @@ public class ActionManager implements Component {
         return method.toUpperCase() + ':' + path;
     }
 
+    protected String resolvePathPrefix(final Class<?> actionClass) {
+        Tuple2<Class, String> caching = this._pathPrefixCaching;
+        if (caching != null && caching._1 == actionClass) {
+            return caching._2;
+        }
+        Action actionAnno = actionClass.getAnnotation(Action.class);
+        String classActionPath = actionAnno != null ? actionAnno.value() : null;
+        if (classActionPath == null
+                || classActionPath.isEmpty()) {
+            classActionPath = resolveClassActionPath(actionClass);
+        }
+        classActionPath = resolveInternalPathMacro(classActionPath, "#CLASS");
+        String packageActionPath = resolveInternalPathMacro(resolvePackageActionPath(actionClass), "#PACKAGE");
+        String prefix = FileNameUtil.concat(packageActionPath, classActionPath, true);
+        if (prefix == null) {
+            prefix = "";
+        }
+        if (!prefix.isEmpty() && prefix.charAt(0) != '/') {
+            prefix = '/' + prefix;
+        }
+        this._pathPrefixCaching = Tuple2.create(actionClass, prefix);
+        return prefix;
+    }
+
     protected String resolvePath(final Object action, final Method method) {
 
-        final Class<?> actionClass = action.getClass();
+        // prefix path
+        String prefix = resolvePathPrefix(action.getClass());
 
         //method path
         String path = AnnotationUtil.getActionAnnoValue(method);
@@ -418,39 +451,21 @@ public class ActionManager implements Component {
         }
         path = resolveInternalPathMacro(path, "#METHOD");
 
-        if (path != null && path.isEmpty()) {
-            path = null;
+        // prepend prefix
+        if (path == null || path.isEmpty()) {
+            path = prefix;
+        } else {
+            path = FileNameUtil.concat(prefix, path, true);
         }
 
-        if (path == null || path.charAt(0) != '/') {
-            //append class path
-            Action actionAnno = actionClass.getAnnotation(Action.class);
-            String classActionPath = actionAnno != null ? actionAnno.value() : null;
-            if (classActionPath == null
-                    || classActionPath.isEmpty()) {
-                classActionPath = resolveClassActionPath(actionClass);
-            }
-            classActionPath = resolveInternalPathMacro(classActionPath, "#CLASS");
-            if (path == null) {
-                path = classActionPath;
-            } else {
-                path = FileNameUtil.concat(classActionPath, path, true);
-            }
-        }
+        // resolve macro
+        path = PATH_TEMPLATE_PARSER.parse(path, createActionPathMacroResolver(action, method));
 
-        if (path.charAt(0) != '/') {
-            // append packagePath
-            String packageActionPath = resolvePackageActionPath(actionClass);
-            packageActionPath = resolveInternalPathMacro(packageActionPath, "#PACKAGE");
-            path = FileNameUtil.concat(packageActionPath, path, true);
-        }
-
+        // resure start with slash
         if (path.charAt(0) != '/') {
             //fix path
             path = '/' + path;
         }
-
-        path = PATH_TEMPLATE_PARSER.parse(path, createActionPathMacroResolver(action, method));
         return path;
     }
 
