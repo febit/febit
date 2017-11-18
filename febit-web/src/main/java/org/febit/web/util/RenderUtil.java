@@ -51,67 +51,37 @@ public class RenderUtil {
     }
 
     public static Object renderSuccessJson(ActionRequest actionRequest) throws IOException {
-        ServletUtil.setContentAndContentType(actionRequest.response, RenderUtil.MIME_TEXT_JSON, "{\"s\":0}");
+        ServletUtil.setContentAndContentType(actionRequest.response, RenderUtil.MIME_TEXT_JSON, "{\"code\":0}");
         return null;
     }
 
-    public static Object renderErrorJson(final ActionRequest actionRequest, int code, String msgRaw, Object[] args) throws IOException {
-
-        String msg = msgRaw;
-        if (msg != null) {
-            if ((msg = I18nUtil.findMessage(actionRequest, msg)) == null) {
-                msg = msgRaw;
-            }
+    protected static String resolveMessage(final ActionRequest actionRequest, final String origin) {
+        if (origin == null) {
+            return null;
         }
-
-        final StringBuilder sb = new StringBuilder((msg != null ? (msg.length() << 1) : 0) + 12)
-                .append("{\"s\":").append(code);
-
-        if (msg != null) {
-            sb.append(",\"msg\":");
-            StringUtil.escapeUTF8(StringUtil.format(msg, args), sb, true);
+        String translated = I18nUtil.findMessage(actionRequest, origin);
+        if (translated != null) {
+            return translated;
         }
-
-        ServletUtil.setContentAndContentType(
-                actionRequest.response,
-                RenderUtil.MIME_TEXT_JSON,
-                sb.append('}').toString());
-
-        return null;
+        return origin;
     }
 
-    public static Object renderRedirectJson(final ActionRequest actionRequest, String url, final String msgRaw) throws IOException {
-
-        String msg = msgRaw;
+    public static Object renderErrorJson(final ActionRequest actionRequest, int code, String msg, Object[] args) throws IOException {
+        msg = resolveMessage(actionRequest, msg);
+        final StringBuilder buffer = new StringBuilder((msg != null ? (msg.length() << 1) : 0) + 20);
+        buffer.append("{\"code\":").append(code);
         if (msg != null) {
-            if ((msg = I18nUtil.findMessage(actionRequest, msg)) == null) {
-                msg = msgRaw;
-            }
+            buffer.append(",\"msg\":");
+            StringUtil.escapeUTF8(StringUtil.format(msg, args), buffer, true);
         }
-
-        final StringBuilder sb = new StringBuilder((msg != null ? (msg.length() << 1) : 0) + 12)
-                .append("{\"s\":").append(ServiceResult.REDIRECT);
-
-        if (url != null) {
-            sb.append(",\"url\":");
-            StringUtil.escapeUTF8(url, sb, true);
-        }
-
-        if (msg != null) {
-            sb.append(",\"msg\":");
-            StringUtil.escapeUTF8(msg, sb, true);
-        }
-
         ServletUtil.setContentAndContentType(
                 actionRequest.response,
                 RenderUtil.MIME_TEXT_JSON,
-                sb.append('}').toString());
-
+                buffer.append('}').toString());
         return null;
     }
 
     public static Object renderJson(ActionRequest actionRequest, Object value, String boxName, String[] profiles) throws IOException {
-
         final HttpServletResponse response = actionRequest.response;
         final String encoding = response.getCharacterEncoding();
         response.setContentType(MimeTypes.MIME_APPLICATION_JSON);
@@ -119,13 +89,12 @@ public class RenderUtil {
         final OutputStream out = response.getOutputStream();
         try {
             if (value == null) {
-                out.write("{\"s\":0}".getBytes(encoding));
+                out.write("{}".getBytes(encoding));
                 return null;
             }
             final boolean hasBox = (boxName != null && !boxName.isEmpty());
 
             final StringBuilder buffer = new StringBuilder(255);
-            buffer.append("{\"s\":0,\"d\":");
             if (hasBox) {
                 buffer.append("{\"").append(boxName).append("\":");
             }
@@ -139,7 +108,6 @@ public class RenderUtil {
             if (hasBox) {
                 buffer.append('}');
             }
-            buffer.append('}');
             out.write(buffer.toString().getBytes(encoding));
         } finally {
             //Notice: no close

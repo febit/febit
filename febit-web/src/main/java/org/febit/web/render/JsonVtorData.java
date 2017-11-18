@@ -24,6 +24,7 @@ import jodd.util.buffer.FastCharBuffer;
 import org.febit.util.StringUtil;
 import org.febit.vtor.Vtor;
 import org.febit.web.ActionRequest;
+import org.febit.web.HttpStatus;
 import org.febit.web.util.I18nUtil;
 import org.febit.web.util.RenderUtil;
 import org.febit.web.util.ServletUtil;
@@ -34,7 +35,7 @@ import org.febit.web.util.ServletUtil;
  */
 public final class JsonVtorData implements Renderable {
 
-    protected static final BeanTemplateParser beanTemplateParser = new BeanTemplateParser();
+    protected static final BeanTemplateParser BEAN_TEMPLATE_PARSER = new BeanTemplateParser();
 
     private final List<Vtor> _vtors;
     private final String _targetName;
@@ -50,7 +51,7 @@ public final class JsonVtorData implements Renderable {
         final List<Vtor> vtors = this._vtors;
         final String targetName = this._targetName;
 
-        final FastCharBuffer buffer = new FastCharBuffer(200).append("{\"s\":20,\"v\":[");
+        final FastCharBuffer buffer = new FastCharBuffer(200).append("{\"vtor\":[");
         boolean appendTargetName = false;
         char[] targetNameChars = null;
         if (targetName != null) {
@@ -66,17 +67,18 @@ public final class JsonVtorData implements Renderable {
             if (i != 0) {
                 buffer.append(',');
             }
-            buffer.append("{\"n\":\"");
+            buffer.append("{\"name\":\"");
             if (appendTargetName) {
                 buffer.append(targetNameChars);
             }
             buffer.append(vtor.name).append('"').append(',');
-            buffer.append("\"m\":\"")
+            buffer.append("\"error\":\"")
                     .append(resolveValidationMessage(vtor, bundleName, locale))
                     .append('"')
                     .append('}');
         }
 
+        actionRequest.response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY);
         ServletUtil.setContentAndContentType(
                 actionRequest.response,
                 RenderUtil.MIME_TEXT_JSON,
@@ -87,7 +89,7 @@ public final class JsonVtorData implements Renderable {
     protected static String resolveValidationMessage(Vtor vtor, String bundleName, Locale locale) {
         final String msg = I18nUtil.findMessage(bundleName, locale, vtor.message);
         if (msg != null) {
-            return StringUtil.escapeUTF8(beanTemplateParser.parse(msg, vtor));
+            return StringUtil.escapeUTF8(BEAN_TEMPLATE_PARSER.parse(msg, vtor));
         }
         return StringPool.EMPTY;
     }
