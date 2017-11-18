@@ -379,25 +379,24 @@ public class ArangoDao<E extends Entity> {
                 .updateDocument(entity.getId(), entity, options);
     }
 
-    public boolean updateXById(String key, String name, Object val) {
-        return updateXById(key, name, val, null);
+    public void updateXById(String key, String name, Object val) {
+        updateXById(key, name, val, null);
     }
 
-    public boolean updateXById(String key, String name, Object val, DocumentUpdateOptions options) {
+    public void updateXById(String key, String name, Object val, DocumentUpdateOptions options) {
         Map<String, Object> update = new HashMap<>();
         update.put(name, val);
-        return update(key, update, options);
+        update(key, update, options);
     }
 
-    public boolean update(String key, Map<String, Object> update) {
-        return update(key, update, null);
+    public void update(String key, Map<String, Object> update) {
+        update(key, update, null);
     }
 
-    public boolean update(String key, Map<String, Object> update, DocumentUpdateOptions options) {
+    public void update(String key, Map<String, Object> update, DocumentUpdateOptions options) {
         DocumentUpdateEntity updateEntity = collection()
                 .updateDocument(key, update, options);
         updateEntity.getKey();
-        return true;
     }
 
     public int update(Condition query, Map<String, Object> update) {
@@ -423,7 +422,6 @@ public class ArangoDao<E extends Entity> {
     public String getTableName() {
         return _tableName;
     }
-
 
     protected static long getFullCount(ArangoCursor cursor) {
         if (cursor == null) {
