@@ -21,6 +21,7 @@ import java.util.Map;
 import jodd.util.ReflectUtil;
 import org.febit.form.AddForm;
 import org.febit.form.ModifyForm;
+import org.febit.form.PageForm;
 import org.febit.leancloud.Condition;
 import org.febit.util.Petite;
 import org.febit.leancloud.Entity;
@@ -137,6 +138,10 @@ public abstract class LcService<E extends Entity> implements Service {
 
     public List<E> list(LcQuery query) {
         LcQueryResponse<E> response = _client.query(query, _entityType);
+        return getResultList(response, query);
+    }
+
+    protected List<E> getResultList(LcQueryResponse<E> response, LcQuery query) {
         if (!response.isOk()) {
             if (response.getStatusCode() == 404
                     && response.getCode() == 101) {
@@ -149,6 +154,28 @@ public abstract class LcService<E extends Entity> implements Service {
         }
         List<E> results = response.getResults();
         return results != null ? results : Collections.EMPTY_LIST;
+    }
+
+    protected void resolveOrder(LcQuery query, PageForm pageForm) {
+
+    }
+
+    public PageResult page(LcSearchForm form, PageForm pageForm) {
+        LcPageResult pageResult = new LcPageResult(pageForm);
+        LcQuery query = LcQuery.create();
+        resolveOrder(query, pageForm);
+        if (form != null) {
+            form.appendTo(query.where());
+        }
+        page(query, pageResult);
+        return pageResult;
+    }
+
+    public void page(LcQuery query, PageResult pageResult) {
+        query.setCount(true);
+        LcQueryResponse<E> response = _client.query(query, _entityType);
+        pageResult.setResults(getResultList(response, query));
+        pageResult.setTotalSize(response.getCount());
     }
 
     public boolean delete(String id) {
