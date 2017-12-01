@@ -84,6 +84,12 @@ public class JsonUtil {
             } catch (Exception ex) {
                 throw new JsonException(ex);
             }
+            switch (propertyName) {
+                case "id":
+                case "_id":
+                    propertyName = "objectId";
+                default:
+            }
             if (value == null
                     && ("objectId".equals(propertyName)
                     || "ACL".equals(propertyName))) {

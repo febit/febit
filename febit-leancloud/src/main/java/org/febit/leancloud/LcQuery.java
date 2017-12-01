@@ -15,6 +15,9 @@
  */
 package org.febit.leancloud;
 
+import org.febit.form.Order;
+import org.febit.form.PageForm;
+
 /**
  *
  * @author zqq90
@@ -51,6 +54,12 @@ public class LcQuery<T extends LcQuery> {
 
     public T order(String... order) {
         this.order = order;
+        return (T) this;
+    }
+
+    public T page(PageForm pageForm) {
+        setLimit(pageForm.getLimit());
+        setSkip(pageForm.getLimit() * (pageForm.getPage() - 1));
         return (T) this;
     }
 
@@ -92,6 +101,19 @@ public class LcQuery<T extends LcQuery> {
         this.order = order;
     }
 
+    public void setOrder(Order order) {
+        if (order == null) {
+            setOrder((String[]) null);
+            return;
+        }
+        String[] array = new String[order.size()];
+        for (int i = 0; i < order.size(); i++) {
+            Order.Entry entry = order.get(i);
+            array[i] = entry.asc ? entry.field : '-' + entry.field;
+        }
+        setOrder(array);
+    }
+
     public String[] getKeys() {
         return keys;
     }
@@ -123,4 +145,5 @@ public class LcQuery<T extends LcQuery> {
     public void setCount(boolean count) {
         this.count = count;
     }
+
 }

@@ -27,26 +27,27 @@ public abstract class Entity implements Serializable {
         //FIXME:
     }
 
-    protected String objectId;
+    // objectId
+    protected String id;
     protected ACL ACL;
     protected String createdAt;
     protected String updatedAt;
 
     public String id() {
-        return objectId;
+        return id;
     }
 
     public void id(String id) {
-        this.objectId = id;
+        this.id = id;
     }
 
     public boolean _isPersistent() {
-        return this.objectId != null;
+        return this.id != null;
     }
 
     @Override
     public int hashCode() {
-        return objectId != null ? objectId.hashCode() : 0;
+        return id != null ? id.hashCode() : 0;
     }
 
     @Override
@@ -66,12 +67,21 @@ public abstract class Entity implements Serializable {
         return myId.equals(eid);
     }
 
-    public String getObjectId() {
-        return objectId;
+    public String getId() {
+        return id;
     }
 
-    public void setObjectId(String objectId) {
-        this.objectId = objectId;
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @param id
+     * @deprecated only for json parser
+     */
+    @Deprecated
+    public void setObjectId(String id) {
+        this.id = id;
     }
 
     public ACL getACL() {

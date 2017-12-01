@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.service;
+package org.febit.leancloud.service;
 
-import org.febit.leancloud.Condition;
+import org.febit.leancloud.Entity;
+import org.febit.leancloud.client.LcApiClient;
+import org.febit.leancloud.meta.LcIncrease;
+import org.febit.service.Service;
 
 /**
  *
  * @author zqq90
  */
-public interface LcSearchForm {
+public abstract class LcInitService implements Service {
 
-    public Condition appendTo(Condition condition);
+    public abstract <E extends Entity> LcApiClient getLcClient(Class<E> entityType);
+
+    protected static <E extends Entity> boolean isIncrease(Class<E> entityType) {
+        return entityType.getAnnotation(LcIncrease.class) != null;
+    }
 }

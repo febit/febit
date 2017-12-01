@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.service;
+package org.febit.leancloud.service;
 
 import java.util.List;
 import org.febit.form.PageForm;
+import org.febit.service.PageResult;
 
 /**
  * @author zqq90

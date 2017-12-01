@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.febit.service;
+package org.febit.leancloud.service;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +34,10 @@ import org.febit.leancloud.client.LcFindResponse;
 import org.febit.leancloud.client.LcQueryResponse;
 import org.febit.leancloud.client.LcUpdateResponse;
 import org.febit.leancloud.util.JsonUtil;
+import org.febit.service.PageResult;
+import org.febit.service.Service;
+import org.febit.service.ServiceResult;
+import org.febit.service.Services;
 import org.febit.util.StringUtil;
 
 /**
@@ -163,6 +167,7 @@ public abstract class LcService<E extends Entity> implements Service {
     public PageResult page(LcSearchForm form, PageForm pageForm) {
         LcPageResult pageResult = new LcPageResult(pageForm);
         LcQuery query = LcQuery.create();
+        query.page(pageForm);
         resolveOrder(query, pageForm);
         if (form != null) {
             form.appendTo(query.where());
@@ -191,7 +196,7 @@ public abstract class LcService<E extends Entity> implements Service {
     public boolean save(E entity) {
         LcCreateResponse response = _client.save(entity);
         if (response.isOk()) {
-            entity.setObjectId(response.getObjectId());
+            entity.id(response.getObjectId());
             entity.setCreatedAt(response.getCreatedAt());
             entity.setUpdatedAt(response.getCreatedAt());  //Note: not typo: updatedAt = createdAt
         }
@@ -238,7 +243,7 @@ public abstract class LcService<E extends Entity> implements Service {
     }
 
     protected static ServiceResult _success(Object result) {
-        return new ServiceResult(result);
+        return ServiceResult.success(result);
     }
 
     protected static ServiceResult _error(int code) {
