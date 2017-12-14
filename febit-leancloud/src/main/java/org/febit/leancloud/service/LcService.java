@@ -73,14 +73,19 @@ public abstract class LcService<E extends Entity> implements Service {
         }
         LcFindResponse<E> response = _client.find(id, _entityType, keys);
         if (!response.isOk()) {
-            if (response.getStatusCode() == 404
-                    && response.getCode() == 101) {
-                return null;
-            }
-            throw new LcException(StringUtil.format(
-                    "Failed to query table: {}, response {}, where id={}",
-                    _table, response, id
-            ));
+            return handleFailedFindResponse(response, id);
+        }
+        return response.getResult();
+    }
+
+    public <T extends Entity> T find(String id, Class<T> destType) {
+        if (id == null) {
+            return null;
+        }
+        // TODO: resolve keys
+        LcFindResponse<T> response = _client.find(id, _table, destType, null);
+        if (!response.isOk()) {
+            return handleFailedFindResponse(response, id);
         }
         return response.getResult();
     }
@@ -145,19 +150,9 @@ public abstract class LcService<E extends Entity> implements Service {
         return getResultList(response, query);
     }
 
-    protected List<E> getResultList(LcQueryResponse<E> response, LcQuery query) {
-        if (!response.isOk()) {
-            if (response.getStatusCode() == 404
-                    && response.getCode() == 101) {
-                return Collections.EMPTY_LIST;
-            }
-            throw new LcException(StringUtil.format(
-                    "Failed to query table: {}, response {}, where {}",
-                    _table, response, JsonUtil.toJsonString(query)
-            ));
-        }
-        List<E> results = response.getResults();
-        return results != null ? results : Collections.EMPTY_LIST;
+    public <T extends Entity> List<E> list(LcQuery query, Class<T> destType) {
+        LcQueryResponse<E> response = _client.query(query, _table, destType);
+        return getResultList(response, query);
     }
 
     protected void resolveOrder(LcQuery query, PageForm pageForm) {
@@ -165,6 +160,10 @@ public abstract class LcService<E extends Entity> implements Service {
     }
 
     public PageResult page(LcSearchForm form, PageForm pageForm) {
+        return page(form, pageForm, _entityType);
+    }
+
+    public <T extends Entity> PageResult page(LcSearchForm form, PageForm pageForm, Class<T> destType) {
         LcPageResult pageResult = new LcPageResult(pageForm);
         LcQuery query = LcQuery.create();
         query.page(pageForm);
@@ -172,13 +171,17 @@ public abstract class LcService<E extends Entity> implements Service {
         if (form != null) {
             form.appendTo(query.where());
         }
-        page(query, pageResult);
+        page(query, pageResult, destType != null ? destType : _entityType);
         return pageResult;
     }
 
     public void page(LcQuery query, PageResult pageResult) {
+        page(query, pageResult, _entityType);
+    }
+
+    public <T extends Entity> void page(LcQuery query, PageResult pageResult, Class<T> destType) {
         query.setCount(true);
-        LcQueryResponse<E> response = _client.query(query, _entityType);
+        LcQueryResponse<E> response = _client.query(query, _table, destType != null ? destType : _entityType);
         pageResult.setResults(getResultList(response, query));
         pageResult.setTotalSize(response.getCount());
     }
@@ -240,6 +243,36 @@ public abstract class LcService<E extends Entity> implements Service {
         Map<String, Object> map = form.modifyMap(profile);
         boolean isOk = update(id, map);
         return isOk ? SUCCESS : _error(ServiceResult.ERROR_MODIFY_NOTFOUND);
+    }
+
+    protected List<E> getResultList(LcQueryResponse<E> response, LcQuery query) {
+        if (!response.isOk()) {
+            return handleFailedQueryResponse(response, query);
+        }
+        List<E> results = response.getResults();
+        return results != null ? results : Collections.EMPTY_LIST;
+    }
+
+    protected <T extends Entity> T handleFailedFindResponse(LcFindResponse<T> response, String id) {
+        if (response.getStatusCode() == 404
+                && response.getCode() == 101) {
+            return null;
+        }
+        throw new LcException(StringUtil.format(
+                "Failed to query table: {}, response {}, where id={}",
+                _table, response, id
+        ));
+    }
+
+    protected <T extends Entity> List<T> handleFailedQueryResponse(LcQueryResponse<T> response, LcQuery query) {
+        if (response.getStatusCode() == 404
+                && response.getCode() == 101) {
+            return Collections.EMPTY_LIST;
+        }
+        throw new LcException(StringUtil.format(
+                "Failed to query table: {}, response {}, where {}",
+                _table, response, JsonUtil.toJsonString(query)
+        ));
     }
 
     protected static ServiceResult _success(Object result) {

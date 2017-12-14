@@ -125,10 +125,16 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcFindResponse<T> find(String id, Class<T> entityType, String[] keys) {
+        return find(id, null, entityType, keys);
+    }
+
+    public <T extends Entity> LcFindResponse<T> find(String id, String table, Class<T> entityType, String[] keys) {
         if (StringUtil.isEmpty(id)) {
             throw new IllegalArgumentException("id is required");
         }
-        String table = getEntityTableName(entityType);
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .get()
                 .addPathSegment(apiVersion)
@@ -142,7 +148,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcQueryResponse<T> query(LcQuery query, Class<T> entityType) {
-        String table = getEntityTableName(entityType);
+        return query(query, null, entityType);
+    }
+
+    public <T extends Entity> LcQueryResponse<T> query(LcQuery query, String table, Class<T> entityType) {
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .get()
                 .addPathSegment(apiVersion)
@@ -178,10 +190,16 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcDeleteResponse delete(String id, Class<T> entityType) {
+        return delete(id, null, entityType);
+    }
+
+    public <T extends Entity> LcDeleteResponse delete(String id, String table, Class<T> entityType) {
         if (StringUtil.isEmpty(id)) {
             throw new IllegalArgumentException("id is required");
         }
-        String table = getEntityTableName(entityType);
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .delete()
                 .addPathSegment(apiVersion)
@@ -192,10 +210,16 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcDeleteResponse delete(String id, Class<T> entityType, Condition where) {
+        return delete(id, null, entityType, where);
+    }
+
+    public <T extends Entity> LcDeleteResponse delete(String id, String table, Class<T> entityType, Condition where) {
         if (StringUtil.isEmpty(id)) {
             throw new IllegalArgumentException("id is required");
         }
-        String table = getEntityTableName(entityType);
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .delete()
                 .addPathSegment(apiVersion)
@@ -211,7 +235,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcCreateResponse save(T entity) {
-        String table = getEntityTableName(entity);
+        return save(entity, null);
+    }
+
+    public <T extends Entity> LcCreateResponse save(T entity, String table) {
+        if (table == null) {
+            table = getEntityTableName(entity);
+        }
         EasyRequest request = new EasyRequest()
                 .post()
                 .addPathSegment(apiVersion)
@@ -222,10 +252,16 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcUpdateResponse update(T entity) {
+        return update(entity, (String) null);
+    }
+
+    public <T extends Entity> LcUpdateResponse update(T entity, String table) {
         if (!entity._isPersistent()) {
             throw new IllegalArgumentException("entity.id is required");
         }
-        String table = getEntityTableName(entity);
+        if (table == null) {
+            table = getEntityTableName(entity);
+        }
         EasyRequest request = new EasyRequest()
                 .put()
                 .addPathSegment(apiVersion)
@@ -234,13 +270,20 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
                 .addPathSegment(entity.id());
         setJsonBody(request, entity, "objectId");
         return readBasicResponse(sendRequest(request));
+
     }
 
     public <T extends Entity> LcUpdateResponse update(String id, Class<T> entityType, Map<String, ?> changes) {
+        return update(id, null, entityType, changes);
+    }
+
+    public <T extends Entity> LcUpdateResponse update(String id, String table, Class<T> entityType, Map<String, ?> changes) {
         if (StringUtil.isEmpty(id)) {
             throw new IllegalArgumentException("id is required");
         }
-        String table = getEntityTableName(entityType);
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .put()
                 .addPathSegment(apiVersion)
@@ -252,7 +295,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcUpdateResponse update(T entity, Condition where) {
-        String table = getEntityTableName(entity);
+        return update(entity, null, where);
+    }
+
+    public <T extends Entity> LcUpdateResponse update(T entity, String table, Condition where) {
+        if (table == null) {
+            table = getEntityTableName(entity);
+        }
         EasyRequest request = new EasyRequest()
                 .put()
                 .addPathSegment(apiVersion)
@@ -269,7 +318,13 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     }
 
     public <T extends Entity> LcUpdateResponse update(String id, Class<T> entityType, Condition op, Condition where) {
-        String table = getEntityTableName(entityType);
+        return update(id, null, entityType, op, where);
+    }
+
+    public <T extends Entity> LcUpdateResponse update(String id, String table, Class<T> entityType, Condition op, Condition where) {
+        if (table == null) {
+            table = getEntityTableName(entityType);
+        }
         EasyRequest request = new EasyRequest()
                 .put()
                 .addPathSegment(apiVersion)
