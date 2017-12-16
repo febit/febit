@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
  *
  * @author zqq90
  */
+@SuppressWarnings("unchecked")
 @Test(groups = {"ignore"})
 public class LcClientTest {
 

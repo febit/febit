@@ -15,7 +15,6 @@
  */
 package org.febit.web.component;
 
-import java.lang.annotation.Annotation;
 import org.febit.lang.ConcurrentIdentityMap;
 import org.febit.util.ClassUtil;
 import org.febit.util.Petite;
@@ -28,9 +27,10 @@ import org.febit.web.util.MatchTypes;
  *
  * @author zqq90
  */
+@SuppressWarnings("unchecked")
 public class RenderManager implements Component {
 
-    protected final ConcurrentIdentityMap<Render> renderCache;
+    protected final ConcurrentIdentityMap<Class, Render> renderCache;
 
     protected Render[] renders;
     protected Render defaultRender;

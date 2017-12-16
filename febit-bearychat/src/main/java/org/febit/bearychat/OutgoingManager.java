@@ -15,9 +15,6 @@
  */
 package org.febit.bearychat;
 
-import org.febit.bearychat.meta.Outgoing;
-import org.febit.shaded.jodd.macro.BasePathMacros;
-import org.febit.shaded.jodd.macro.RegExpPathMacros;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -28,7 +25,10 @@ import java.util.List;
 import java.util.Map;
 import jodd.paramo.MethodParameter;
 import jodd.paramo.Paramo;
+import org.febit.bearychat.meta.Outgoing;
 import org.febit.convert.Convert;
+import org.febit.shaded.jodd.macro.BasePathMacros;
+import org.febit.shaded.jodd.macro.RegExpPathMacros;
 import org.febit.util.ArraysUtil;
 import org.febit.util.ClassUtil;
 import org.febit.util.StringUtil;

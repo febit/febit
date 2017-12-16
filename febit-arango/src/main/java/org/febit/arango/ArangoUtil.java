@@ -50,8 +50,8 @@ public class ArangoUtil {
 
     private static final ArangoLinkInfo[] EMPTY_LINKS = new ArangoLinkInfo[0];
 
-    private static final ConcurrentIdentityMap<String[]> BEAN_FIELDS_CACHING = new ConcurrentIdentityMap<>(64);
-    private static final ConcurrentIdentityMap<ArangoLinkInfo[]> LINKS_CACHING = new ConcurrentIdentityMap<>(64);
+    private static final ConcurrentIdentityMap<Class, String[]> BEAN_FIELDS_CACHING = new ConcurrentIdentityMap<>(64);
+    private static final ConcurrentIdentityMap<Class, ArangoLinkInfo[]> LINKS_CACHING = new ConcurrentIdentityMap<>(64);
 
     private static class Holder {
 
@@ -119,10 +119,12 @@ public class ArangoUtil {
         return readToArray(cursor.asListRemaining(), clazz);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T[] readToArray(List<T> list, Class<T> clazz) {
         return list.toArray((T[]) Array.newInstance(clazz, list.size()));
     }
 
+    @SuppressWarnings("unchecked")
     private static ArangoLinkInfo[] collectInfosIfAbsent(Class type) {
         ArangoLinkInfo[] infos = LINKS_CACHING.get(type);
         if (infos != null) {
@@ -149,6 +151,7 @@ public class ArangoUtil {
         return LINKS_CACHING.putIfAbsent(type, infos);
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, Map<String, Entity>> resolveLinks(Collection<?> rows, Class type) {
         if (rows == null || rows.isEmpty()) {
             return null;
@@ -218,7 +221,7 @@ public class ArangoUtil {
         public final Field field;
         public final Class<Entity> linkType;
 
-        public ArangoLinkInfo(ArangoDao dao, Field field, Class linkType) {
+        public ArangoLinkInfo(ArangoDao dao, Field field, Class<Entity> linkType) {
             this.dao = dao;
             this.field = field;
             this.name = field.getName();

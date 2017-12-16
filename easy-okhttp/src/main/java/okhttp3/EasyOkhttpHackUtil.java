@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.util.Collections;
 import static okhttp3.HttpUrl.defaultPort;
 
 /**

@@ -41,6 +41,7 @@ public abstract class ArangoService<E extends Entity> implements Service {
     protected ArangoDao<E> dao;
 
     @Petite.Init
+    @SuppressWarnings("unchecked")
     protected void initDao() {
         Class<E> entityType = (Class<E>) ReflectUtil.getRawType(ArangoService.class.getTypeParameters()[0], getClass());
         this.dao = Services.get(ArangoInitService.class).createDao(entityType);
@@ -150,7 +151,7 @@ public abstract class ArangoService<E extends Entity> implements Service {
 
     }
 
-    public PageResult page(ArangoSearchForm form, PageForm pageForm, Class type) {
+    public PageResult page(ArangoSearchForm form, PageForm pageForm, Class<?> type) {
         ArangoPageResult pageResult = new ArangoPageResult(pageForm);
         Condition condition = c();
         resolveOrder(condition, pageForm);
@@ -161,7 +162,7 @@ public abstract class ArangoService<E extends Entity> implements Service {
         return pageResult;
     }
 
-    public void page(Condition query, PageResult pageResult, Class type) {
+    public void page(Condition query, PageResult pageResult, Class<?> type) {
         dao.page(query, pageResult, type);
     }
 

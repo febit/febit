@@ -446,6 +446,7 @@ public class Condition {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Condition in(String prop, T... values) {
         prop = fixColumnName(prop);
         filterBuffer().append("d.`").append(prop)
@@ -510,6 +511,7 @@ public class Condition {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Condition notIn(String prop, T... values) {
         prop = fixColumnName(prop);
         filterBuffer().append("d.`").append(prop)
@@ -719,6 +721,7 @@ public class Condition {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Condition allIn(String prop, T... values) {
         prop = fixColumnName(prop);
         filterBuffer().append("d.`").append(prop)
@@ -783,6 +786,7 @@ public class Condition {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Condition anyIn(String prop, T... values) {
         prop = fixColumnName(prop);
         filterBuffer().append("d.`").append(prop)
@@ -847,6 +851,7 @@ public class Condition {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> Condition noneIn(String prop, T... values) {
         prop = fixColumnName(prop);
         filterBuffer().append("d.`").append(prop)

@@ -23,13 +23,7 @@ import org.febit.lang.Time;
  */
 public interface Matcher {
 
-    final static Matcher MATCH_ALL = new Matcher() {
-
-        @Override
-        public boolean match(Time time) {
-            return true;
-        }
-    };
+    final static Matcher MATCH_ALL = (Time time) -> true;
 
     boolean match(Time time);
 }

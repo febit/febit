@@ -23,6 +23,7 @@ import org.febit.form.PageForm;
  * @author zqq90
  * @param <T>
  */
+@SuppressWarnings("unchecked")
 public class LcQuery<T extends LcQuery> {
 
     public static LcQuery create() {

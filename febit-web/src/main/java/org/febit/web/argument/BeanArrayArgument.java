@@ -17,7 +17,6 @@ package org.febit.web.argument;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import jodd.bean.BeanUtil;
 import org.febit.lang.Iter;
 import org.febit.util.ClassUtil;
@@ -30,7 +29,7 @@ import org.febit.web.ActionRequest;
 public class BeanArrayArgument implements Argument {
 
     @Override
-    public Object resolve(ActionRequest actionRequest, Class type, String name, int index) {
+    public Object resolve(ActionRequest actionRequest, Class<?> type, String name, int index) {
         if (name == null) {
             return new RuntimeException("Can't resolve array type arg whitout name: " + actionRequest.actionConfig.handler);
         }

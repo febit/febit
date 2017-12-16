@@ -41,7 +41,7 @@ public final class JsonVtorData implements Renderable {
     private final String _targetName;
 
     public JsonVtorData(List<Vtor> vtors, String targetName) {
-        this._vtors = vtors != null ? vtors : Collections.EMPTY_LIST;
+        this._vtors = vtors != null ? vtors : Collections.emptyList();
         this._targetName = targetName;
     }
 

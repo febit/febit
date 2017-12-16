@@ -25,6 +25,7 @@ import org.febit.util.StringUtil;
  * @author zqq90
  * @param <T>
  */
+@SuppressWarnings("unchecked")
 public class Condition<T extends Condition> extends LinkedHashMap<String, Object> {
 
     public static Condition c() {

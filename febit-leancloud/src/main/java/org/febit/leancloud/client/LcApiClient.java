@@ -26,8 +26,8 @@ import org.febit.lang.ConcurrentIdentityMap;
 import org.febit.leancloud.Condition;
 import org.febit.leancloud.Entity;
 import org.febit.leancloud.LcQuery;
-import org.febit.leancloud.util.JsonUtil;
 import org.febit.leancloud.meta.LcTable;
+import org.febit.leancloud.util.JsonUtil;
 import org.febit.util.EncryptUtil;
 import org.febit.util.StringUtil;
 
@@ -36,6 +36,7 @@ import org.febit.util.StringUtil;
  * @author zqq90
  * @param <C>
  */
+@SuppressWarnings("unchecked")
 public class LcApiClient<C extends LcApiClient> implements Closeable, AutoCloseable {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(LcApiClient.class);
@@ -47,7 +48,7 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
     public static final String HEAD_ACCEPT = "Accept";
     public static final String APPLICATION_JSON = "application/json";
 
-    private static final ConcurrentIdentityMap<String> TABLE_NAME_CACHE = new ConcurrentIdentityMap<>(64);
+    private static final ConcurrentIdentityMap<Class, String> TABLE_NAME_CACHE = new ConcurrentIdentityMap<>(64);
 
     public static Builder<Builder, LcApiClient> builder() {
         return new Builder<Builder, LcApiClient>() {

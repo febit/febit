@@ -23,8 +23,6 @@ import com.arangodb.entity.CollectionEntity;
 import org.febit.Listener;
 import org.febit.arango.meta.Arango;
 import org.febit.arango.meta.ArangoIdGenerator;
-import org.febit.lang.Function0;
-import org.febit.lang.Function1;
 import org.febit.service.Service;
 import org.febit.util.ClassUtil;
 import org.febit.util.StringUtil;
@@ -38,30 +36,17 @@ import org.febit.util.agent.LazyMap;
 public abstract class ArangoInitService implements Service, Listener {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ArangoInitService.class);
-    protected final LazyAgent<ArangoDB> LAZY_CLIENT = LazyAgent.create(new Function0<ArangoDB>() {
-        @Override
-        public ArangoDB call() {
-            return createClient();
+    protected final LazyAgent<ArangoDB> LAZY_CLIENT = LazyAgent.create(this::createClient);
+
+    protected final LazyAgent<ArangoDatabase> LAZY_DATABASE = LazyAgent.create(() -> {
+        try {
+            return createDatabase();
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed create ArangoDatabase: " + ex.getMessage(), ex);
         }
     });
 
-    protected final LazyAgent<ArangoDatabase> LAZY_DATABASE = LazyAgent.create(new Function0<ArangoDatabase>() {
-        @Override
-        public ArangoDatabase call() {
-            try {
-                return createDatabase();
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed create ArangoDatabase: " + ex.getMessage(), ex);
-            }
-        }
-    });
-
-    protected final LazyMap<String, ArangoCollection> LAZY_COLLECTIONS = LazyMap.create(new Function1<ArangoCollection, String>() {
-        @Override
-        public ArangoCollection call(String name) {
-            return ArangoInitService.this.createCollection(name);
-        }
-    });
+    protected final LazyMap<String, ArangoCollection> LAZY_COLLECTIONS = LazyMap.create(ArangoInitService.this::createCollection);
 
     protected abstract ArangoDB.Builder createClientBuilder() throws Exception;
 

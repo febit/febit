@@ -81,14 +81,11 @@ public abstract class AbstractTaskExecutor implements TaskExecutor {
     }
 
     protected Runnable createRunnable(Time time) {
-        return new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    task.execute(taskContext);
-                } finally {
-                    AbstractTaskExecutor.this.onTaskFinished();
-                }
+        return () -> {
+            try {
+                task.execute(taskContext);
+            } finally {
+                AbstractTaskExecutor.this.onTaskFinished();
             }
         };
     }

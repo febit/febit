@@ -234,11 +234,8 @@ public class Scheduler {
 
     private void click(final long millis) {
         if (this.useNotifyThread) {
-            final Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Scheduler.this.notifyAllExecutor(millis);
-                }
+            final Thread thread = new Thread(() -> {
+                Scheduler.this.notifyAllExecutor(millis);
             }, THREAD_NAME_PREFIX + "notify-" + ThreadUtil.nextThreadNumber());
             if (this.notifyThread != null && this.notifyThread.isAlive()) {
                 //FIXME: alert this unexpected state

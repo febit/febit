@@ -29,8 +29,8 @@ import org.febit.web.meta.GET;
 import org.febit.web.meta.HEAD;
 import org.febit.web.meta.PATCH;
 import org.febit.web.meta.PUT;
-import org.testng.annotations.Test;
 import static org.testng.Assert.*;
+import org.testng.annotations.Test;
 
 /**
  *

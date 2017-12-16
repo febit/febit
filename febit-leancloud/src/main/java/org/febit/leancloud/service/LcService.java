@@ -23,7 +23,6 @@ import org.febit.form.AddForm;
 import org.febit.form.ModifyForm;
 import org.febit.form.PageForm;
 import org.febit.leancloud.Condition;
-import org.febit.util.Petite;
 import org.febit.leancloud.Entity;
 import org.febit.leancloud.LcException;
 import org.febit.leancloud.LcQuery;
@@ -38,6 +37,7 @@ import org.febit.service.PageResult;
 import org.febit.service.Service;
 import org.febit.service.ServiceResult;
 import org.febit.service.Services;
+import org.febit.util.Petite;
 import org.febit.util.StringUtil;
 
 /**
@@ -45,6 +45,7 @@ import org.febit.util.StringUtil;
  * @author zqq90
  * @param <E>
  */
+@SuppressWarnings("unchecked")
 public abstract class LcService<E extends Entity> implements Service {
 
     public static final ServiceResult SUCCESS = ServiceResult.SUCCESS_RESULT;
@@ -171,7 +172,7 @@ public abstract class LcService<E extends Entity> implements Service {
         if (form != null) {
             form.appendTo(query.where());
         }
-        page(query, pageResult, destType != null ? destType : _entityType);
+        page(query, pageResult, destType);
         return pageResult;
     }
 

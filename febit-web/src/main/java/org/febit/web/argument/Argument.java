@@ -24,5 +24,5 @@ import org.febit.web.util.MatchTypes;
  */
 public interface Argument extends MatchTypes {
 
-    Object resolve(final ActionRequest request, final Class type, String name, final int index);
+    Object resolve(final ActionRequest request, final Class<?> type, String name, final int index);
 }

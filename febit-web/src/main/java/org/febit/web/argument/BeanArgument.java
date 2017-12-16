@@ -15,8 +15,6 @@
  */
 package org.febit.web.argument;
 
-import java.util.Enumeration;
-import java.util.Iterator;
 import jodd.bean.BeanUtil;
 import org.febit.lang.Iter;
 import org.febit.util.ClassUtil;
@@ -29,6 +27,7 @@ import org.febit.web.ActionRequest;
 public class BeanArgument implements Argument {
 
     @Override
+    @SuppressWarnings("unchecked")
     public Object resolve(ActionRequest actionRequest, Class type, String name, int index) {
         final Object bean = ClassUtil.newInstance(type);
         Iter<String> iter = actionRequest.getParameterNames();

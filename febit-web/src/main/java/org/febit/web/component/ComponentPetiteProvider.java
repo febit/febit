@@ -26,7 +26,7 @@ import org.febit.util.PetiteGlobalBeanProvider;
 public class ComponentPetiteProvider implements PetiteGlobalBeanProvider {
 
     @Override
-    public boolean isSupportType(Class type) {
+    public boolean isSupportType(Class<?> type) {
         if (Component.class.isAssignableFrom(type)) {
             return true;
         }
@@ -34,7 +34,7 @@ public class ComponentPetiteProvider implements PetiteGlobalBeanProvider {
     }
 
     @Override
-    public Object newInstance(Class type, Petite petite) {
+    public Object newInstance(Class<?> type, Petite petite) {
         if (!isSupportType(type)) {
             return null;
         }

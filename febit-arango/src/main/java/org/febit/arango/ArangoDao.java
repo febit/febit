@@ -346,6 +346,7 @@ public class ArangoDao<E extends Entity> {
         page(query, pageResult, null, type);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> void page(Condition query, PageResult pageResult, AqlQueryOptions options, Class<T> type) {
         int limit = pageResult.getPageSize();
         int skip = (pageResult.getPage() - 1) * limit;

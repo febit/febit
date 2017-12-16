@@ -27,7 +27,7 @@ import org.febit.web.argument.Argument;
  */
 public class ArgumentManager implements ArgumentResolver, Component {
 
-    protected final ConcurrentIdentityMap<Argument> argumentCache;
+    protected final ConcurrentIdentityMap<Class, Argument> argumentCache;
 
     protected Argument[] arguments;
     protected Argument defaultArgument;

@@ -27,7 +27,7 @@ import org.febit.web.json.Json;
 public class JsonBodyArgument implements Argument {
 
     @Override
-    public Object resolve(ActionRequest request, Class type, String name, int index) {
+    public Object resolve(ActionRequest request, Class<?> type, String name, int index) {
         try {
             Reader reader = request.request.getReader();
             return Json.parse(reader, type);

@@ -97,6 +97,7 @@ public class ServletUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public static Map<String, String> getParamStringMap(HttpServletRequest request) {
         Map<String, Object> map = request.getParameterMap();
 

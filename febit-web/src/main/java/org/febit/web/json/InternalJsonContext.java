@@ -38,14 +38,14 @@ import org.febit.web.json.meta.JsonExclude;
 public final class InternalJsonContext extends JsonContext {
 
     private final Set<String> profiles;
-    private final IdentityMap<Set<String>> excludesPool = new IdentityMap<>(16);
+    private final IdentityMap<Class, Set<String>> excludesPool = new IdentityMap<>(16);
 
     public InternalJsonContext(JsonSerializer jsonSerializer, Appendable appendable, String[] profiles) {
         super(jsonSerializer, appendable, true);
         if (profiles != null) {
             this.profiles = new HashSet<>(Arrays.asList(profiles));
         } else {
-            this.profiles = Collections.EMPTY_SET;
+            this.profiles = Collections.emptySet();
         }
     }
 
@@ -76,7 +76,7 @@ public final class InternalJsonContext extends JsonContext {
             }
         }
         if (excludes.isEmpty()) {
-            return Collections.EMPTY_SET;
+            return Collections.emptySet();
         }
         return excludes;
     }

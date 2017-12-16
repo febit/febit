@@ -20,12 +20,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
 import jodd.util.collection.SortedArrayList;
 import org.febit.util.StringUtil;
-import org.febit.web.ActionConfig;
 
 /**
  *
@@ -74,12 +73,12 @@ public class ActionMacroPath {
 
         public ActionMacroPath parse(String key) {
             if (directPaths.contains(key)) {
-                return new ActionMacroPath(key, Collections.EMPTY_MAP);
+                return new ActionMacroPath(key, Collections.emptyMap());
             }
             String[] pathSegments = pathToSegment(key);
             ParserEntry parserEntry = findParserEntry(pathSegments);
             if (parserEntry == null) {
-                return new ActionMacroPath(key, Collections.EMPTY_MAP);
+                return new ActionMacroPath(key, Collections.emptyMap());
             }
             Map<String, String> params = makeMap(parserEntry.paramKeys, parserEntry.exportParams(pathSegments));
             return new ActionMacroPath(parserEntry.key, params);

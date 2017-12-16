@@ -17,7 +17,6 @@ package org.febit.web;
 
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -68,6 +67,7 @@ public class ActionRequest {
         return this.request.getParameter(name);
     }
 
+    @SuppressWarnings("unchecked")
     public Iter<String> getParameterNames() {
         Enumeration<String> paramNames = this.request.getParameterNames();
         if (macroParams.isEmpty()) {
@@ -76,7 +76,7 @@ public class ActionRequest {
         return CollectionUtil.concat(
                 macroParams.keySet().iterator(),
                 CollectionUtil.toIter(paramNames)
-                        .filter((name) -> !macroParams.containsKey(name))
+                        .filter(name -> !macroParams.containsKey(name))
         );
     }
 
