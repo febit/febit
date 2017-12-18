@@ -209,6 +209,7 @@ public abstract class LcService<E extends Entity> implements Service {
 
     public boolean update(E entity) {
         LcUpdateResponse response = _client.update(entity);
+        // return real reason
         if (response.isOk()) {
             entity.setUpdatedAt(response.getUpdatedAt());
         }

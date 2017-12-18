@@ -36,14 +36,12 @@ public class ErrorHandlerFilter implements Filter {
         try {
             return actionRequest.invoke();
         } catch (Exception e) {
-            Throwable carry;
+            Throwable carry = e;
             if (e instanceof InvocationTargetException) {
                 carry = ((InvocationTargetException) e).getCause();
                 if (carry == null) {
                     carry = e;
                 }
-            } else {
-                carry = e;
             }
             if (carry instanceof ServiceResultCarrier) {
                 ServiceResult result = ((ServiceResultCarrier) carry).getServiceResult();
