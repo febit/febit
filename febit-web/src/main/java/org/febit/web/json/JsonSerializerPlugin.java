@@ -15,26 +15,13 @@
  */
 package org.febit.web.json;
 
-import jodd.json.JsonContext;
-import jodd.json.TypeJsonSerializer;
+import jodd.json.JsonSerializer;
 
 /**
  *
  * @author zqq90
  */
-public class LongArrayJsonSerializer implements TypeJsonSerializer<long[]> {
+public interface JsonSerializerPlugin {
 
-    @Override
-    public boolean serialize(JsonContext jsonContext, long[] array) {
-
-        jsonContext.writeOpenArray();
-        for (int i = 0; i < array.length; i++) {
-            if (i > 0) {
-                jsonContext.writeComma();
-            }
-            jsonContext.write(new StringBuilder().append('\"').append(array[i]).append('\"'));
-        }
-        jsonContext.writeCloseArray();
-        return true;
-    }
+    void apply(JsonSerializer serializer);
 }
