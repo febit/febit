@@ -51,15 +51,18 @@ public class ServiceResultRender implements Render<ServiceResult>, MatchTypes {
             case ServiceResult.ERROR_DEL_NOTFOUND:
             case ServiceResult.ERROR_QUERY_NOTFOUND:
                 return HttpStatus.NOT_FOUND;
+            case ServiceResult.ERROR_ADD:
+            case ServiceResult.ERROR_DEL:
+            case ServiceResult.ERROR_QUERY:
             case ServiceResult.ERROR_RIGHT:
             case ServiceResult.ERROR_XSRF:
             case ServiceResult.ERROR_VERCODE:
             case ServiceResult.ERROR_NOT_LOGIN:
+            case ServiceResult.ERROR_MODIFY:
             case ServiceResult.ERROR_MODIFY_UNABLE:
             case ServiceResult.ERROR_DEL_UNABLE:
-                return HttpStatus.BAD_REQUEST;
-            case ServiceResult.ERROR_QUERY:
             case ServiceResult.ERROR_UPLOAD:
+                return HttpStatus.BAD_REQUEST;
             case ServiceResult.ERROR_UPLOAD_CANTWRITE:
             case ServiceResult.ERROR_SYS:
                 return HttpStatus.INTERNAL_SERVER_ERROR;
