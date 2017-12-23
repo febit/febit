@@ -175,9 +175,9 @@ public class LcApiClient<C extends LcApiClient> implements Closeable, AutoClosea
         if (query.getInclude() != null) {
             request.query("include", query.getInclude());
         }
-        String[] order = query.getOrder();
-        if (order != null && order.length != 0) {
-            request.query("order", StringUtil.join(order, ','));
+        String order = query.getOrderQueryString();
+        if (order != null) {
+            request.query("order", order);
         }
         String[] keys = query.getKeys();
         if (keys != null && keys.length != 0) {

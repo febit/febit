@@ -15,6 +15,7 @@
  */
 package org.febit.leancloud;
 
+import java.util.stream.Collectors;
 import org.febit.form.Order;
 import org.febit.form.PageForm;
 
@@ -30,9 +31,13 @@ public class LcQuery<T extends LcQuery> {
         return new LcQuery();
     }
 
+    protected static String transferOrderEntry(Order.Entry entry) {
+        return entry.asc ? entry.field : '-' + entry.field;
+    }
+
     protected Integer limit;
     protected Integer skip;
-    protected String[] order;
+    protected Order order;
     protected String[] keys;
     protected String include;
     protected Condition where;
@@ -53,8 +58,21 @@ public class LcQuery<T extends LcQuery> {
         return (T) this;
     }
 
-    public T order(String... order) {
-        this.order = order;
+    protected void prepareOrder() {
+        if (this.order == null) {
+            this.order = Order.create();
+        }
+    }
+
+    public T asc(String... fields) {
+        prepareOrder();
+        this.order.asc(fields);
+        return (T) this;
+    }
+
+    public T desc(String... fields) {
+        prepareOrder();
+        this.order.desc(fields);
         return (T) this;
     }
 
@@ -94,25 +112,21 @@ public class LcQuery<T extends LcQuery> {
         this.skip = skip;
     }
 
-    public String[] getOrder() {
+    public Order getOrder() {
         return order;
     }
 
-    public void setOrder(String[] order) {
-        this.order = order;
+    public String getOrderQueryString() {
+        if (order == null || order.isEmpty()) {
+            return null;
+        }
+        return order.stream()
+                .map(LcQuery::transferOrderEntry)
+                .collect(Collectors.joining(","));
     }
 
     public void setOrder(Order order) {
-        if (order == null) {
-            setOrder((String[]) null);
-            return;
-        }
-        String[] array = new String[order.size()];
-        for (int i = 0; i < order.size(); i++) {
-            Order.Entry entry = order.get(i);
-            array[i] = entry.asc ? entry.field : '-' + entry.field;
-        }
-        setOrder(array);
+        this.order = order;
     }
 
     public String[] getKeys() {
