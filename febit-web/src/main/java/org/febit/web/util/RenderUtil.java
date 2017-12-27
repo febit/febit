@@ -47,7 +47,7 @@ public class RenderUtil {
         if (result.success()) {
             return RenderUtil.renderSuccessJson(actionRequest);
         }
-        return RenderUtil.renderErrorJson(actionRequest, result.code, result.msg, result.getArgs());
+        return RenderUtil.renderErrorJson(actionRequest, result.getCode(), result.getMessage(), result.getArgs());
     }
 
     public static Object renderSuccessJson(ActionRequest actionRequest) throws IOException {
@@ -72,7 +72,7 @@ public class RenderUtil {
         buffer.append("{\"code\":").append(code);
         if (msg != null) {
             buffer.append(",\"msg\":");
-            StringUtil.escapeUTF8(StringUtil.format(msg, args), buffer, true);
+            StringUtil.escapeUTF8(args == null ? msg : StringUtil.format(msg, args), buffer, true);
         }
         ServletUtil.setContentAndContentType(
                 actionRequest.response,
