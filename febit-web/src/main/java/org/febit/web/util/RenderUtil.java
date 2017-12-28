@@ -72,7 +72,7 @@ public class RenderUtil {
         buffer.append("{\"code\":").append(code);
         if (msg != null) {
             buffer.append(",\"msg\":");
-            StringUtil.escapeUTF8(args == null ? msg : StringUtil.format(msg, args), buffer, true);
+            StringUtil.escapeUTF8(args == null || args.length == 0 ? msg : StringUtil.format(msg, args), buffer, true);
         }
         ServletUtil.setContentAndContentType(
                 actionRequest.response,

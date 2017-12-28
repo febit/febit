@@ -17,6 +17,7 @@ package org.febit.easyokhttp;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.function.Function;
 import okhttp3.CacheControl;
 import okhttp3.Call;
 import okhttp3.EasyOkhttpHackUtil;

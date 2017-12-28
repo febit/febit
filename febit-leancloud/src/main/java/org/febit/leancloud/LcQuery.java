@@ -116,6 +116,14 @@ public class LcQuery<T extends LcQuery> {
         return order;
     }
 
+    public int getOrderSize() {
+        return order.size();
+    }
+
+    public boolean isOrderEmpty() {
+        return order.isEmpty();
+    }
+
     public String getOrderQueryString() {
         if (order == null || order.isEmpty()) {
             return null;

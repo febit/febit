@@ -292,8 +292,16 @@ public abstract class LcService<E extends Entity> implements Service {
         return ServiceResult.error(code);
     }
 
+    protected static ServiceResult _error(String message) {
+        return ServiceResult.error(message);
+    }
+
     protected static ServiceResult _error(String message, Object... arguments) {
         return ServiceResult.error(message, arguments);
+    }
+
+    protected static ServiceResult _error(int code, String message) {
+        return ServiceResult.error(code, message);
     }
 
     protected static ServiceResult _error(int code, String message, Object... arguments) {
