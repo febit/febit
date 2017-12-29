@@ -125,9 +125,9 @@ public class ActionManager implements Component {
         for (String raw : this.scan) {
             int index = raw.indexOf(' ');
             if (index < 0) {
-                list.add(Tuple2.create(raw, "/"));
+                list.add(Tuple2.of(raw, "/"));
             } else {
-                list.add(Tuple2.create(
+                list.add(Tuple2.of(
                         raw.substring(index).trim() + '.',
                         raw.substring(0, index)
                 ));
@@ -435,7 +435,7 @@ public class ActionManager implements Component {
         if (!prefix.isEmpty() && prefix.charAt(0) != '/') {
             prefix = '/' + prefix;
         }
-        this._pathPrefixCaching = Tuple2.create(actionClass, prefix);
+        this._pathPrefixCaching = Tuple2.of(actionClass, prefix);
         return prefix;
     }
 
