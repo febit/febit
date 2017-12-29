@@ -67,7 +67,7 @@ public class WebApp extends App implements javax.servlet.Filter {
 
     @Override
     protected void loadProps(String propsFiles) {
-        PropsUtil.load(_props, BASE_WEBAPP);
+        PropsUtil.load(getProps(), BASE_WEBAPP);
         super.loadProps(propsFiles);
     }
 
@@ -147,7 +147,7 @@ public class WebApp extends App implements javax.servlet.Filter {
     }
 
     public static Petite petite() {
-        return _instance._petite;
+        return _instance.getPetite();
     }
 
     public static WebApp instance() {
