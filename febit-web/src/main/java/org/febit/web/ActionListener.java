@@ -16,14 +16,14 @@
 package org.febit.web;
 
 import org.febit.Listener;
-import org.febit.util.PriorityUtil;
+import org.febit.util.Priority;
 import org.febit.web.component.ActionManager;
 
 /**
  *
  * @author zqq90
  */
-@PriorityUtil.Lower
+@Priority.Level(Priority.PRI_LOWER)
 public class ActionListener implements Listener {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ActionListener.class);
