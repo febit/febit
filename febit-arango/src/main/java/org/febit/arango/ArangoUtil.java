@@ -21,7 +21,6 @@ import com.arangodb.ArangoDatabase;
 import com.arangodb.util.MapBuilder;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.febit.arango.meta.Arango;
+import java.util.stream.Stream;
 import org.febit.arango.meta.ArangoId;
 import org.febit.arango.meta.ArangoIgnore;
 import org.febit.arango.meta.ArangoLink;
@@ -37,7 +36,6 @@ import org.febit.bean.FieldInfo;
 import org.febit.bean.FieldInfoResolver;
 import org.febit.lang.ConcurrentIdentityMap;
 import org.febit.service.Services;
-import org.febit.util.ArraysUtil;
 import org.febit.util.ClassUtil;
 import org.febit.util.CollectionUtil;
 import org.febit.util.StringUtil;
@@ -103,16 +101,20 @@ public class ArangoUtil {
         return resolveFieldsIfAbsent(type);
     }
 
+    public static Stream<FieldInfo> resolveFieldInfo(Class<?> type) {
+        return FieldInfoResolver.of(type)
+                .withNameFormatter(ArangoUtil::fixFieldName)
+                .filterMethod(m -> false)
+                .filterField(f -> !ClassUtil.isTransient(f) && ClassUtil.isSettable(f) && f.getAnnotation(ArangoIgnore.class) == null)
+                .stream();
+    }
+
     protected static synchronized String[] resolveFieldsIfAbsent(Class type) {
-        FieldInfo[] fieldInfos = new ArangoFieldInfoResolver(type).resolveAndSort();
-        ArrayList<String> settableFields = new ArrayList<>(fieldInfos.length);
-        for (FieldInfo fieldInfo : fieldInfos) {
-            if (fieldInfo.isSettable()) {
-                settableFields.add(fieldInfo.name);
-            }
-        }
-        String[] ret = ArraysUtil.exportStringArray(settableFields);
-        return BEAN_FIELDS_CACHING.putIfAbsent(type, ret);
+        String[] settableFields = resolveFieldInfo(type)
+                .map(ArangoUtil::resolveFieldName)
+                .sorted(ArangoUtil::compareFieldName)
+                .toArray(String[]::new);
+        return BEAN_FIELDS_CACHING.putIfAbsent(type, settableFields);
     }
 
     public static <T> T[] readToArray(ArangoCursor<T> cursor, Class<T> clazz) {
@@ -229,57 +231,25 @@ public class ArangoUtil {
         }
     }
 
-    protected static class ArangoFieldInfoResolver extends FieldInfoResolver {
+    public static String resolveFieldName(FieldInfo f) {
+        Field field = f.getField();
+        return field != null && field.getAnnotation(ArangoId.class) != null
+                ? "_key"
+                : f.name;
+    }
 
-        public ArangoFieldInfoResolver(Class beanType) {
-            super(beanType);
-        }
+    public static int compareFieldName(FieldInfo o1, FieldInfo o2) {
+        return compareFieldName(resolveFieldName(o1), resolveFieldName(o2));
+    }
 
-        @Override
-        public int compare(FieldInfo o1, FieldInfo o2) {
-            String name1 = o1.name;
-            String name2 = o2.name;
-            if (name1.equals("_key")) {
-                return name2.equals("_key") ? 0 : -1;
-            }
-            if (name2.equals("_key")) {
-                return 1;
-            }
-            return name1.compareTo(name2);
+    public static int compareFieldName(String name1, String name2) {
+        if (name1.equals("_key")) {
+            return name2.equals("_key") ? 0 : -1;
         }
-
-        @Override
-        protected String formatName(String name) {
-            return fixFieldName(name);
+        if (name2.equals("_key")) {
+            return 1;
         }
-
-        @Override
-        protected boolean filter(Method method) {
-            if (method.getAnnotation(Arango.class) == null) {
-                return false;
-            }
-            return super.filter(method);
-        }
-
-        @Override
-        protected boolean filter(Field field) {
-            if (ClassUtil.isTransient(field)) {
-                return false;
-            }
-            if (field.getAnnotation(ArangoIgnore.class) != null) {
-                return false;
-            }
-            return super.filter(field);
-        }
-
-        @Override
-        protected void registField(String name, Field field) {
-            if (field.getAnnotation(ArangoId.class) != null) {
-                super.registField("_key", field);
-                return;
-            }
-            super.registField(name, field);
-        }
+        return name1.compareTo(name2);
     }
 
     public static String fixFieldName(String name) {
