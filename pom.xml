@@ -24,7 +24,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <slf4j.version>1.7.21</slf4j.version>
+    <jodd.version>3.7.1</jodd.version>
+    <slf4j.version>1.7.25</slf4j.version>
     <febit-common.version>${project.version}</febit-common.version>
   </properties>
   <modules>
@@ -298,7 +299,7 @@
       <dependency>
         <groupId>org.jodd</groupId>
         <artifactId>jodd-bom</artifactId>
-        <version>3.7.1</version>
+        <version>${jodd.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
