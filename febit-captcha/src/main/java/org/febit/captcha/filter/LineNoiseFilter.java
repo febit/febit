@@ -15,6 +15,7 @@
  */
 package org.febit.captcha.filter;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import org.febit.captcha.Filter;
@@ -34,7 +35,7 @@ public class LineNoiseFilter implements Filter {
         final int height = image.getHeight();
         final Graphics graph = image.getGraphics();
         for (int i = 0, len = count; i < len; i++) {
-            graph.setColor(RandomUtil.nextColor(true));
+            graph.setColor(new Color(RandomUtil.nextInt(), true));
             graph.drawLine(RandomUtil.nextInt(width),
                     RandomUtil.nextInt(height),
                     RandomUtil.nextInt(width),
