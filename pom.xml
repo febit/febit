@@ -218,7 +218,6 @@
           <configuration>
             <compilerArgument> -Xlint:unchecked </compilerArgument>
             <showWarnings>true</showWarnings>
-            <debug>false</debug>
           </configuration>
         </plugin>
         <plugin>
@@ -254,13 +253,6 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <debug>false</debug>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
