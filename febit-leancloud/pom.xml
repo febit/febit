@@ -33,6 +33,11 @@
       <artifactId>easy-okhttp</artifactId>
     </dependency>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>febit-web</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
       <groupId>org.jodd</groupId>
       <artifactId>jodd-json</artifactId>
     </dependency>

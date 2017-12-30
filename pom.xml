@@ -28,12 +28,12 @@
     <febit-common.version>${project.version}</febit-common.version>
   </properties>
   <modules>
+    <module>easy-okhttp</module>
     <module>febit-schedule</module>
+    <module>febit-web</module>
     <module>febit-arango</module>
     <module>febit-leancloud</module>
-    <module>febit-web</module>
     <module>febit-bearychat</module>
-    <module>easy-okhttp</module>
     <module>febit-captcha</module>
   </modules>
   <repositories>
