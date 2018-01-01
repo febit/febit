@@ -30,6 +30,7 @@
   </properties>
   <modules>
     <module>easy-okhttp</module>
+    <module>febit-ip-tools</module>
     <module>febit-schedule</module>
     <module>febit-web</module>
     <module>febit-arango</module>
