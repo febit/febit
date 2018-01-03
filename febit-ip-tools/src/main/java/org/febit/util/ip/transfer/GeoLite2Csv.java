@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import org.febit.lang.Iter;
 import org.febit.util.CsvUtil;
 import org.febit.util.ip.IpUtil;
+import static org.febit.util.ip.IpUtil.IP_MAX;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +67,8 @@ public class GeoLite2Csv {
         long ipSegmentHead = IpUtil.parseLong(ipSegment.substring(0, split));
         int ipSegmentMark = Integer.parseInt(ipSegment.substring(split + 1));
 
-        long start = IpUtil.getSegmentStart(ipSegmentHead, ipSegmentMark);
-        long end = IpUtil.getSegmentEnd(ipSegmentHead, ipSegmentMark);
+        long start = getSegmentStart(ipSegmentHead, ipSegmentMark);
+        long end = getSegmentEnd(ipSegmentHead, ipSegmentMark);
 
         GeoLite2CsvDict.DictEntry location = end != IpUtil.IP_MAX ? dict.get(arr[1], arr[2]) : GeoLite2CsvDict.UNKNOWN;
         // location
@@ -78,4 +79,21 @@ public class GeoLite2Csv {
 
         return new TransferInputImpl(start, end, location.countryCode, null, location.province, location.city);
     }
+
+    private static long getSegmentStart(final long ip, final int mark) {
+        int i = 32 - mark;
+        if (i <= 0) {
+            return ip;
+        }
+        return ip & (IP_MAX << i);
+    }
+
+    private static long getSegmentEnd(final long ip, final int mark) {
+        int i = 32 - mark;
+        if (i <= 0) {
+            return ip;
+        }
+        return ip | ((1L << i) - 1);
+    }
+
 }
