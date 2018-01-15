@@ -97,7 +97,7 @@ public final class Mon17IpSeeker {
         if (ipv4 == null || ipv4.length != 4) {
             return UNKNOWN_LOCATION;
         }
-        return locate(IpUtil.makeInt(ipv4[0], ipv4[1], ipv4[2], ipv4[3]));
+        return locate(makeInt(ipv4[0], ipv4[1], ipv4[2], ipv4[3]));
     }
 
     /**
@@ -111,7 +111,7 @@ public final class Mon17IpSeeker {
      * @return
      */
     public Location locate(final byte b0, final byte b1, final byte b2, final byte b3) {
-        return locate(IpUtil.makeInt(b0, b1, b2, b3));
+        return locate(makeInt(b0, b1, b2, b3));
     }
 
     /**
@@ -143,7 +143,7 @@ public final class Mon17IpSeeker {
 
     private int getIntL(final int offset) {
         final byte[] buf = this.buffer;
-        return IpUtil.makeInt(buf[offset + 3],
+        return makeInt(buf[offset + 3],
                 buf[offset + 2],
                 buf[offset + 1],
                 buf[offset]);
@@ -151,7 +151,7 @@ public final class Mon17IpSeeker {
 
     private int getIntB(final int offset) {
         final byte[] buf = this.buffer;
-        return IpUtil.makeInt(buf[offset],
+        return makeInt(buf[offset],
                 buf[offset + 1],
                 buf[offset + 2],
                 buf[offset + 3]);
@@ -160,9 +160,16 @@ public final class Mon17IpSeeker {
     protected Location createLocationAtOffset(int offset) {
         final byte[] buf = this.buffer;
         return new Location(new String(buf,
-                this.offsetLimit - 1024 + IpUtil.makeInt((byte) 0, buf[offset + 6], buf[offset + 5], buf[offset + 4]),
+                this.offsetLimit - 1024 + makeInt((byte) 0, buf[offset + 6], buf[offset + 5], buf[offset + 4]),
                 buf[offset + 7] & 0xFF,
                 UTF_8));
+    }
+
+    private static int makeInt(final byte b0, final byte b1, final byte b2, final byte b3) {
+        return ((b0 & 0xFF) << 24)
+                | ((b1 & 0xFF) << 16)
+                | ((b2 & 0xFF) << 8)
+                | ((b3 & 0xFF));
     }
 
     public BaseIter<LocationIP> createIterator() {
