@@ -172,13 +172,6 @@ public final class Mon17IpSeeker {
                 | ((b3 & 0xFF));
     }
 
-    private static int makeInt(final byte b0, final byte b1, final byte b2, final byte b3) {
-        return ((b0 & 0xFF) << 24)
-                | ((b1 & 0xFF) << 16)
-                | ((b2 & 0xFF) << 8)
-                | ((b3 & 0xFF));
-    }
-
     public BaseIter<LocationIP> createIterator() {
         return new Iter(getSegmentOffset(0));
     }
