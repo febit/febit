@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import org.febit.lang.Iter;
 import org.febit.util.CsvUtil;
 import org.febit.util.ip.IpUtil;
+import static org.febit.util.ip.IpUtil.IP_MAX;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
