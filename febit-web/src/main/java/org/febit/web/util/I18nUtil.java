@@ -16,7 +16,6 @@
 package org.febit.web.util;
 
 import java.util.Locale;
-import jodd.util.LocaleUtil;
 import jodd.util.ResourceBundleMessageResolver;
 import org.febit.web.ActionRequest;
 
@@ -34,7 +33,7 @@ public class I18nUtil {
     }
 
     public static void setLocale(ActionRequest actionRequest, String localeCode) {
-        actionRequest.request.getSession().setAttribute(KEY_LOCALE, LocaleUtil.getLocale(localeCode));
+        actionRequest.request.getSession().setAttribute(KEY_LOCALE, Locale.forLanguageTag(localeCode));
     }
 
     public static Locale getLocale(ActionRequest actionRequest) {

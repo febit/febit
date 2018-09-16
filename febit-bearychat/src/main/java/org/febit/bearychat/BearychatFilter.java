@@ -18,7 +18,7 @@ package org.febit.bearychat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import org.febit.util.agent.LazyAgent;
 import org.febit.web.ActionRequest;
 import org.febit.web.Filter;

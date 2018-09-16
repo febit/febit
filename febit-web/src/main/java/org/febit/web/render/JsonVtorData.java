@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import jodd.bean.BeanTemplateParser;
 import jodd.util.StringPool;
-import jodd.util.buffer.FastCharBuffer;
+import jodd.buffer.FastCharBuffer;
 import org.febit.util.StringUtil;
 import org.febit.vtor.Vtor;
 import org.febit.web.ActionRequest;
@@ -82,14 +82,14 @@ public final class JsonVtorData implements Renderable {
         ServletUtil.setContentAndContentType(
                 actionRequest.response,
                 RenderUtil.MIME_TEXT_JSON,
-                StringUtil.toString(buffer.append(']').append('}')));
+                buffer.append(']').append('}').toString());
         return null;
     }
 
     protected static String resolveValidationMessage(Vtor vtor, String bundleName, Locale locale) {
         final String msg = I18nUtil.findMessage(bundleName, locale, vtor.message);
         if (msg != null) {
-            return StringUtil.escapeUTF8(BEAN_TEMPLATE_PARSER.parse(msg, vtor));
+            return StringUtil.escapeUTF8(BEAN_TEMPLATE_PARSER.parseWithBean(msg, vtor));
         }
         return StringPool.EMPTY;
     }

@@ -26,13 +26,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import jodd.bean.BeanTemplateParser;
+import jodd.bean.BeanUtil;
 import jodd.io.FileNameUtil;
-import jodd.io.findfile.ClassFinder;
 import jodd.io.findfile.ClassScanner;
-import jodd.util.StringTemplateParser;
+import jodd.template.StringTemplateParser;
 import org.febit.lang.IdentitySet;
 import org.febit.lang.Tuple2;
 import org.febit.service.Services;
@@ -172,34 +172,44 @@ public class ActionManager implements Component {
         return new ActionRequest(actionConfig, request, response, macroPath.params);
     }
 
+    private Class<?> loadActionClassIfValid(String className) {
+        if (!className.endsWith("Action")) {
+            return null;
+        }
+        Class actionClass;
+        try {
+            actionClass = ClassUtil.getClass(className);
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
+        if (ClassUtil.isAbstract(actionClass)
+                || _discardCaching.contains(actionClass)
+                || !AnnotationUtil.isAction(actionClass)) {
+            return null;
+        }
+        return actionClass;
+    }
+
     public void scanActions() {
         final List<Class> actionClasses = new ArrayList<>();
-        final ClassScanner scanner = new ClassScanner() {
 
-            @Override
-            protected void onEntry(ClassFinder.EntryData ed) throws Exception {
-                String className = ed.getName();
-                if (!className.endsWith("Action")) {
-                    return;
-                }
-                Class actionClass = ClassUtil.getClass(className);
-                if (ClassUtil.isAbstract(actionClass)
-                        || _discardCaching.contains(actionClass)
-                        || !AnnotationUtil.isAction(actionClass)) {
-                    return;
-                }
-                LOG.debug("Find action: {}", actionClass);
-                actionClasses.add(actionClass);
-            }
-        };
         String[] includes = new String[_basePkgs.size()];
         for (int i = 0; i < _basePkgs.size(); i++) {
             includes[i] = _basePkgs.get(i)._1 + '*';
         }
-        scanner.setExcludeAllEntries(true);
-        scanner.setIncludeResources(false);
-        scanner.setIncludedEntries(includes);
-        scanner.scanDefaultClasspath();
+
+        ClassScanner.create()
+                .excludeAllEntries(true)
+                .includeResources(false)
+                .includeEntries(includes)
+                .registerEntryConsumer((enrty) -> {
+                    Class<?> actionClass = loadActionClassIfValid(enrty.name());
+                    if (actionClass != null) {
+                        LOG.debug("Find action: {}", actionClass);
+                        actionClasses.add(actionClass);
+                    }
+                })
+                .scanDefaultClasspath();
 
         // register actions
         actionClasses.forEach(this::register);
@@ -478,9 +488,8 @@ public class ActionManager implements Component {
                 + "}");
     }
 
-    protected StringTemplateParser.MacroResolver createActionPathMacroResolver(Object action, Method method) {
-        StringTemplateParser.MacroResolver actionMacroResolver = BeanTemplateParser.createBeanMacroResolver(action);
-        return (String macroName) -> {
+    protected Function<String, String> createActionPathMacroResolver(Object action, Method method) {
+        return macroName -> {
             switch (macroName) {
                 case "#METHOD":
                     return method.getName();
@@ -489,7 +498,11 @@ public class ActionManager implements Component {
                 case "#PACKAGE":
                     return resolvePackageActionPath(action.getClass());
                 default:
-                    return actionMacroResolver.resolve(macroName);
+                    Object value = BeanUtil.declaredSilent.getProperty(action, macroName);
+                    if (value == null) {
+                        return null;
+                    }
+                    return value.toString();
             }
         };
     }

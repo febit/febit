@@ -16,7 +16,7 @@
 package org.febit.web.filter;
 
 import java.io.OutputStream;
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import org.febit.web.ActionRequest;
 import org.febit.web.OuterFilter;
 

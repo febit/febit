@@ -15,7 +15,7 @@
  */
 package org.febit.web.render;
 
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import org.febit.web.ActionRequest;
 import org.febit.web.util.ServletUtil;
 

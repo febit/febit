@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import jodd.util.ReflectUtil;
 import org.febit.form.AddForm;
 import org.febit.form.ModifyForm;
 import org.febit.form.PageForm;
@@ -38,6 +37,7 @@ import org.febit.service.PageResult;
 import org.febit.service.Service;
 import org.febit.service.ServiceResult;
 import org.febit.service.Services;
+import org.febit.util.ClassUtil;
 import org.febit.util.Petite;
 import org.febit.util.StringUtil;
 
@@ -60,7 +60,7 @@ public abstract class LcService<E extends Entity> implements Service {
     @Petite.Init
     protected void init() {
         LcInitService initService = Services.get(LcInitService.class);
-        _entityType = (Class<E>) ReflectUtil.getRawType(LcService.class.getTypeParameters()[0], getClass());
+        _entityType = (Class<E>) ClassUtil.getRawType(LcService.class.getTypeParameters()[0], getClass());
         _table = LcApiClient.getEntityTableName(_entityType);
         _client = initService.getLcClient(_entityType);
     }

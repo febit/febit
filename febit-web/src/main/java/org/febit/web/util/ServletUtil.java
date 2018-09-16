@@ -24,7 +24,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jodd.io.FileNameUtil;
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import jodd.util.StringPool;
 import org.febit.util.CollectionUtil;
 import org.febit.web.WebApp;

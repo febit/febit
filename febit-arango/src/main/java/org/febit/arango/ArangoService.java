@@ -19,7 +19,6 @@ import com.arangodb.ArangoDBException;
 import com.arangodb.util.MapBuilder;
 import java.util.List;
 import java.util.Map;
-import jodd.util.ReflectUtil;
 import org.febit.form.AddForm;
 import org.febit.form.ModifyForm;
 import org.febit.form.PageForm;
@@ -27,6 +26,7 @@ import org.febit.service.PageResult;
 import org.febit.service.Service;
 import org.febit.service.ServiceResult;
 import org.febit.service.Services;
+import org.febit.util.ClassUtil;
 import org.febit.util.Petite;
 
 /**
@@ -43,7 +43,7 @@ public abstract class ArangoService<E extends Entity> implements Service {
     @Petite.Init
     @SuppressWarnings("unchecked")
     protected void initDao() {
-        Class<E> entityType = (Class<E>) ReflectUtil.getRawType(ArangoService.class.getTypeParameters()[0], getClass());
+        Class<E> entityType = (Class<E>) ClassUtil.getRawType(ArangoService.class.getTypeParameters()[0], getClass());
         this.dao = Services.get(ArangoInitService.class).createDao(entityType);
     }
 

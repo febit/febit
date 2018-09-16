@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import jodd.json.JsonSerializer;
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import org.febit.util.StringUtil;
 import org.febit.web.ActionRequest;
 import org.febit.web.render.Renderable;

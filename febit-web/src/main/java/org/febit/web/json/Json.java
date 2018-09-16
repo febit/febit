@@ -30,7 +30,7 @@ import jodd.json.JsonParser;
 import jodd.json.JsonSerializer;
 import jodd.json.TypeJsonSerializer;
 import jodd.util.UnsafeUtil;
-import jodd.util.buffer.FastCharBuffer;
+import jodd.buffer.FastCharBuffer;
 import org.febit.util.CollectionUtil;
 import org.febit.util.Priority;
 
@@ -63,9 +63,9 @@ public class Json {
     }
 
     public static String toJsonString(Object source, String... profiles) {
-        final FastCharBuffer fastCharBuffer = new FastCharBuffer();
-        new InternalJsonContext(SERIALIZER, fastCharBuffer, profiles).serialize(source);
-        return UnsafeUtil.createString(fastCharBuffer.toArray());
+        final FastCharBuffer buf = new FastCharBuffer();
+        new InternalJsonContext(SERIALIZER, buf, profiles).serialize(source);
+        return buf.toString();
     }
 
     protected static JsonParser newParser() {
@@ -92,7 +92,9 @@ public class Json {
         }
         InternalJsonContext internalJsonContext = (InternalJsonContext) jsonContext;
         internalJsonContext.writeOpenObject();
-        final PropertyDescriptor[] propertyDescriptors = ClassIntrospector.lookup(source.getClass()).getAllPropertyDescriptors();
+        final PropertyDescriptor[] propertyDescriptors = ClassIntrospector.get()
+                .lookup(source.getClass())
+                .getAllPropertyDescriptors();
         boolean notfirst = false;
         for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
             final String propertyName = propertyDescriptor.getName();

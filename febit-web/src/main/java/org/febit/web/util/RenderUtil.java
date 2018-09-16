@@ -18,7 +18,7 @@ package org.febit.web.util;
 import java.io.IOException;
 import java.io.OutputStream;
 import javax.servlet.http.HttpServletResponse;
-import jodd.util.MimeTypes;
+import jodd.net.MimeTypes;
 import org.febit.service.ServiceResult;
 import org.febit.util.StringUtil;
 import org.febit.web.ActionRequest;

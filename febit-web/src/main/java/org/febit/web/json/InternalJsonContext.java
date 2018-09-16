@@ -41,7 +41,7 @@ public final class InternalJsonContext extends JsonContext {
     private final IdentityMap<Class, Set<String>> excludesPool = new IdentityMap<>(16);
 
     public InternalJsonContext(JsonSerializer jsonSerializer, Appendable appendable, String[] profiles) {
-        super(jsonSerializer, appendable, true);
+        super(jsonSerializer, appendable);
         if (profiles != null) {
             this.profiles = new HashSet<>(Arrays.asList(profiles));
         } else {
@@ -67,7 +67,7 @@ public final class InternalJsonContext extends JsonContext {
 
     private Set<String> resolveExcludeds(final Class clz) {
         final Set<String> excludes = new HashSet<>();
-        ClassDescriptor classDescriptor = ClassIntrospector.lookup(clz);
+        ClassDescriptor classDescriptor = ClassIntrospector.get().lookup(clz);
         for (PropertyDescriptor propertyDescriptor : classDescriptor.getAllPropertyDescriptors()) {
             if (propertyDescriptor.getGetter(false) != null) {
                 if (isExcluded(propertyDescriptor)) {
