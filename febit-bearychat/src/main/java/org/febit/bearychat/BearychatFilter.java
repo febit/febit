@@ -33,7 +33,7 @@ public class BearychatFilter implements Filter {
     protected static final Object RESULT_TOKEN_ERR = new Text(MimeTypes.MIME_APPLICATION_JSON, "{\"error\":\"TOKEN_ERR\"}");
     protected String[] tokens;
 
-    protected LazyAgent<Set<String>> _tokensSet = LazyAgent.create(() -> {
+    protected LazyAgent<Set<String>> _tokensSet = LazyAgent.of(() -> {
         if (tokens == null
                 || tokens.length == 0) {
             throw new IllegalStateException("tokens is required");

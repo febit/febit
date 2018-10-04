@@ -36,9 +36,9 @@ import org.febit.util.agent.LazyMap;
 public abstract class ArangoInitService implements Service, Listener {
 
     private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ArangoInitService.class);
-    protected final LazyAgent<ArangoDB> LAZY_CLIENT = LazyAgent.create(this::createClient);
+    protected final LazyAgent<ArangoDB> LAZY_CLIENT = LazyAgent.of(this::createClient);
 
-    protected final LazyAgent<ArangoDatabase> LAZY_DATABASE = LazyAgent.create(() -> {
+    protected final LazyAgent<ArangoDatabase> LAZY_DATABASE = LazyAgent.of(() -> {
         try {
             return createDatabase();
         } catch (Exception ex) {
